@@ -1,6 +1,5 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
-  Search,
   Calendar,
   Bell,
   LayoutDashboard,
@@ -8,25 +7,52 @@ import {
   Users,
   Landmark,
   Image as ImageIcon,
-  FileText
+  FileText,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import './Layout.css'
 import adminAvatar from '../assets/admin_avatar.png'
 
 const Layout = ({ children, currentView, onViewChange }) => {
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem('sidebar-collapsed') === 'true'
+  })
+
+  const toggleSidebar = () => {
+    setIsCollapsed(prev => {
+      const next = !prev
+      localStorage.setItem('sidebar-collapsed', String(next))
+      return next
+    })
+  }
+
   return (
     <div className="dashboard-container">
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+        {/* Toggle Button */}
+        <button
+          className="sidebar-toggle-btn"
+          onClick={toggleSidebar}
+          aria-label={isCollapsed ? "Expandir menú" : "Colapsar menú"}
+        >
+          {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+        </button>
+
         <div className="sidebar-header">
-          <h2>Archivo de Folklore</h2>
-          <span className="subtitle">REGIÓN TÁCHIRA</span>
+          <div className="sidebar-logo-text">
+            <h2>Archivo de Folklore</h2>
+            <span className="subtitle">REGIÓN TÁCHIRA</span>
+          </div>
+          <div className="sidebar-emblem" title="Archivo de Folklore">AF</div>
         </div>
 
         <nav className="sidebar-nav">
           <button
             onClick={() => onViewChange('dashboard')}
             className={`nav-item nav-btn ${currentView === 'dashboard' ? 'active' : ''}`}
+            data-label="Dashboard"
           >
             <LayoutDashboard className="nav-icon" size={20} />
             <span>Dashboard</span>
@@ -34,6 +60,7 @@ const Layout = ({ children, currentView, onViewChange }) => {
           <button
             onClick={() => onViewChange('usuarios')}
             className={`nav-item nav-btn ${currentView === 'usuarios' ? 'active' : ''}`}
+            data-label="Gestión de Usuarios"
           >
             <UserCheck className="nav-icon" size={20} />
             <span>Gestión de Usuarios</span>
@@ -41,6 +68,7 @@ const Layout = ({ children, currentView, onViewChange }) => {
           <button
             onClick={() => onViewChange('cultores')}
             className={`nav-item nav-btn ${currentView === 'cultores' ? 'active' : ''}`}
+            data-label="Directorio de Cultores"
           >
             <Users className="nav-icon" size={20} />
             <span>Directorio de Cultores</span>
@@ -48,6 +76,7 @@ const Layout = ({ children, currentView, onViewChange }) => {
           <button
             onClick={() => onViewChange('preregistro')}
             className={`nav-item nav-btn ${currentView === 'preregistro' ? 'active' : ''}`}
+            data-label="Pre-registro"
           >
             <FileText className="nav-icon" size={20} />
             <span>Pre-registro</span>
@@ -55,6 +84,7 @@ const Layout = ({ children, currentView, onViewChange }) => {
           <button
             onClick={() => onViewChange('patrimonio')}
             className={`nav-item nav-btn ${currentView === 'patrimonio' ? 'active' : ''}`}
+            data-label="Inventario Patrimonial"
           >
             <Landmark className="nav-icon" size={20} />
             <span>Inventario Patrimonial</span>
@@ -62,6 +92,7 @@ const Layout = ({ children, currentView, onViewChange }) => {
           <button
             onClick={() => onViewChange('difusion')}
             className={`nav-item nav-btn ${currentView === 'difusion' ? 'active' : ''}`}
+            data-label="Difusión y Galería"
           >
             <ImageIcon className="nav-icon" size={20} />
             <span>Difusión y Galería</span>
@@ -69,6 +100,7 @@ const Layout = ({ children, currentView, onViewChange }) => {
           <button
             onClick={() => onViewChange('reportes')}
             className={`nav-item nav-btn ${currentView === 'reportes' ? 'active' : ''}`}
+            data-label="Reportes y Catálogo"
           >
             <FileText className="nav-icon" size={20} />
             <span>Reportes y Catálogo</span>
@@ -76,7 +108,7 @@ const Layout = ({ children, currentView, onViewChange }) => {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="profile-badge">
+          <div className="profile-badge" data-label="Administrador (Sede Principal)">
             <div className="profile-initials">AD</div>
             <div className="profile-info">
               <span className="profile-name">Administrador</span>
@@ -90,12 +122,7 @@ const Layout = ({ children, currentView, onViewChange }) => {
       <main className="main-content">
         {/* Top Header */}
         <header className="topbar">
-          <div className="search-bar">
-            <Search className="search-icon" size={18} />
-            <input type="text" placeholder="Buscar cultor u obra..." />
-          </div>
-
-          <div className="topbar-actions">
+          <div className="topbar-actions" style={{ marginLeft: 'auto' }}>
             <button className="icon-btn" aria-label="Calendario">
               <Calendar size={18} />
             </button>

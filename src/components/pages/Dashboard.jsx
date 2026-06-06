@@ -1,7 +1,6 @@
 import React from 'react'
 import {
   Download,
-  Plus,
   ChevronDown,
   BookOpen,
   MapPin,
@@ -29,10 +28,6 @@ const Dashboard = () => {
           <button className="btn-secondary">
             <Download size={16} />
             <span>Exportar Reporte</span>
-          </button>
-          <button className="btn-primary">
-            <Plus size={16} />
-            <span>Nuevo Registro</span>
           </button>
         </div>
       </div>
