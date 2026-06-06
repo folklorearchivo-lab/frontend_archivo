@@ -1,0 +1,458 @@
+/* Reportes y Catálogo Digital Specific Styles */
+
+.reportes-module-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* KPIs Panel Grid */
+.kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.kpi-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+}
+
+.kpi-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background-color: #C05640; /* Terracota border indicator */
+}
+
+.kpi-card.kpi-cultores::before { background-color: #C05640; }
+.kpi-card.kpi-inventario::before { background-color: #10b981; }
+.kpi-card.kpi-consultas::before { background-color: #f59e0b; }
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.kpi-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.kpi-trend-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.kpi-trend-badge.positive {
+  color: #065f46;
+  background-color: #d1fae5;
+}
+
+.kpi-trend-badge.neutral {
+  color: #374151;
+  background-color: #e5e7eb;
+}
+
+/* Charts Grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.chart-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 280px;
+}
+
+.chart-card h3 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  border-left: 3px solid #C05640;
+  padding-left: 8px;
+}
+
+/* Left Chart: Municipio Progress bars */
+.municipio-bars-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.municipio-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.municipio-bar-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.municipio-bar-track {
+  width: 100%;
+  height: 8px;
+  background-color: #f1f0ee;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.municipio-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Right Chart: SVG Vector layout */
+.svg-chart-container {
+  width: 100%;
+  height: 180px;
+  margin-top: auto;
+  position: relative;
+}
+
+.svg-chart-container svg {
+  width: 100%;
+  height: 100%;
+}
+
+.svg-grid-line {
+  stroke: #ebeae6;
+  stroke-width: 1;
+  stroke-dasharray: 4,4;
+}
+
+.svg-axis-text {
+  fill: #807471;
+  font-size: 9px;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.svg-chart-line {
+  fill: none;
+  stroke: #C05640;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 4px 6px rgba(192, 86, 64, 0.2));
+}
+
+.svg-chart-dot {
+  fill: #ffffff;
+  stroke: #C05640;
+  stroke-width: 2.5;
+  cursor: pointer;
+  transition: r 0.2s ease, fill 0.2s ease;
+}
+
+.svg-chart-dot:hover {
+  r: 6px;
+  fill: #C05640;
+}
+
+/* Export and Catalogue Section */
+.export-catalog-card {
+  background-color: #fbfbfa;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 32px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+}
+
+.export-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.export-column h3, .catalog-column h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.export-column p, .catalog-column p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.export-buttons-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* Format specific color themes for export buttons */
+.btn-export-pdf {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  color: #ffffff;
+  background-color: #ef4444; /* Red */
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(239, 68, 68, 0.15);
+}
+
+.btn-export-pdf:hover {
+  background-color: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+}
+
+.btn-export-excel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  color: #ffffff;
+  background-color: #10b981; /* Green */
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.15);
+}
+
+.btn-export-excel:hover {
+  background-color: #059669;
+  border-color: #059669;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+}
+
+.btn-export-logs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  color: #ffffff;
+  background-color: #4b403d; /* Dark Brown/Stone */
+  border: 1px solid #4b403d;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(75, 64, 61, 0.15);
+}
+
+.btn-export-logs:hover {
+  background-color: #3f2d29;
+  border-color: #3f2d29;
+  box-shadow: 0 4px 6px rgba(75, 64, 61, 0.2);
+}
+
+/* Right Catalog export column styles */
+.catalog-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.catalog-search-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 12px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.catalog-search-wrapper:focus-within {
+  border-color: #C05640;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.catalog-search-wrapper input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-main);
+  width: 100%;
+}
+
+.catalog-table-wrapper {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background-color: #ffffff;
+  overflow: hidden;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.simple-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.simple-table th {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: #faf9f7;
+  text-transform: uppercase;
+}
+
+.simple-table td {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.simple-table tr:last-child td {
+  border-bottom: none;
+}
+
+.simple-table tr:hover td {
+  background-color: #fdfdfc;
+}
+
+.btn-export-inline {
+  background: none;
+  border: none;
+  color: #C05640;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.btn-export-inline:hover {
+  color: #a84a35;
+}
+
+/* Consolidated PDF download action button */
+.consolidated-action-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.btn-consolidated-pdf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 28px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  background-color: #C05640;
+  border: 1px solid #C05640;
+  color: #ffffff;
+  box-shadow: 0 4px 6px rgba(192, 86, 64, 0.15);
+  transition: all 0.2s ease;
+}
+
+.btn-consolidated-pdf:hover:not(:disabled) {
+  background-color: #a84a35;
+  border-color: #a84a35;
+  box-shadow: 0 10px 15px -3px rgba(192, 86, 64, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-consolidated-pdf:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive Overrides */
+@media (max-width: 900px) {
+  .kpis-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .export-catalog-card {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}

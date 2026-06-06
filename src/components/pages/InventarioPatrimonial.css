@@ -1,0 +1,761 @@
+/* Inventario Patrimonial Module Styles */
+
+.inventario-module-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Header Styling */
+.inventario-module-container .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.inventario-module-container .breadcrumbs {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.inventario-module-container .breadcrumbs .separator {
+  margin: 0 6px;
+  color: #d8d7d3;
+}
+
+.inventario-module-container .breadcrumbs .current {
+  color: #C05640;
+}
+
+.inventario-module-container h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+}
+
+/* Header Action Button */
+.inventario-module-container .btn-terracota {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #C05640;
+  border: 1px solid #C05640;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.inventario-module-container .btn-terracota:hover {
+  background-color: #a84a35;
+  border-color: #a84a35;
+}
+
+/* Filter Controls Bar */
+.inventario-module-container .filter-bar-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+}
+
+.inventario-module-container .search-input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: #f5f4f0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px 12px;
+  width: 320px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.inventario-module-container .search-input-wrapper:focus-within {
+  background-color: #ffffff;
+  border-color: var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.inventario-module-container .search-input-icon {
+  color: var(--text-secondary);
+  margin-right: 8px;
+}
+
+.inventario-module-container .search-input-wrapper input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-main);
+  width: 100%;
+}
+
+.inventario-module-container .clear-search-icon-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 50%;
+}
+
+.inventario-module-container .clear-search-icon-btn:hover {
+  background-color: #ebeae6;
+  color: var(--text-main);
+}
+
+/* Selector Dropdowns */
+.inventario-module-container .selectors-wrapper {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inventario-module-container .filter-dropdown-select {
+  background-color: #f5f4f0;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  outline: none;
+  cursor: pointer;
+  min-width: 160px;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23807471' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 18px;
+  padding-right: 32px;
+}
+
+.inventario-module-container .filter-dropdown-select:focus {
+  border-color: #C05640;
+  background-color: #ffffff;
+}
+
+/* Data Table Grid */
+.inventario-module-container .inventario-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.inventario-module-container .inventario-table th {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: #fbfbfa;
+}
+
+.inventario-module-container .inventario-table td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.inventario-module-container .inventario-table tr:hover td {
+  background-color: #faf9f6;
+}
+
+.inventario-module-container .inventario-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Piece Cell Details */
+.inventario-module-container .piece-profile-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.inventario-module-container .piece-thumbnail {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+  background-color: #f5f4f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.inventario-module-container .piece-thumbnail-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background-color: #f3eae8;
+  color: #C05640;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ebe0dd;
+}
+
+.inventario-module-container .piece-display-name {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.inventario-module-container .piece-code-info {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  font-family: monospace;
+}
+
+.inventario-module-container .author-cell-text {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.inventario-module-container .materials-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Conservation Status Pills */
+.inventario-module-container .cons-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.5px;
+}
+
+.inventario-module-container .cons-badge.excelente {
+  color: #0d9488; /* Aqua/teal green */
+  background-color: #ccfbf1;
+}
+
+.inventario-module-container .cons-badge.deteriorado {
+  color: #b91c1c; /* Subtle light red */
+  background-color: #fee2e2;
+}
+
+.inventario-module-container .cons-badge.restauración {
+  color: #d97706; /* Light amber */
+  background-color: #fef3c7;
+}
+
+.inventario-module-container .cons-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.inventario-module-container .cons-badge.excelente .cons-badge-dot {
+  background-color: #0d9488;
+}
+
+.inventario-module-container .cons-badge.deteriorado .cons-badge-dot {
+  background-color: #ef4444;
+}
+
+.inventario-module-container .cons-badge.restauración .cons-badge-dot {
+  background-color: #f59e0b;
+}
+
+/* Location labels */
+.inventario-module-container .location-text {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-main);
+  background-color: #f1f0ee;
+  border: 1px solid var(--border-color);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* Interactive QR Code Hover popups */
+.inventario-module-container .qr-code-cell {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+  padding: 4px;
+}
+
+.inventario-module-container .qr-code-cell:hover {
+  color: #C05640;
+}
+
+.inventario-module-container .qr-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  width: 140px;
+  background-color: #2d1e1b;
+  color: #ffffff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 6px 8px;
+  position: absolute;
+  z-index: 100;
+  bottom: 125%; /* Position above the QR icon */
+  left: 50%;
+  transform: translateX(-50%);
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.inventario-module-container .qr-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%; /* Arrow at the bottom */
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #2d1e1b transparent transparent transparent;
+}
+
+.inventario-module-container .qr-code-cell:hover .qr-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Actions Row */
+.inventario-module-container .grid-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.inventario-module-container .grid-action-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.inventario-module-container .grid-action-btn:hover {
+  background-color: #f5f4f0;
+  color: #C05640;
+  border-color: #ebeae6;
+}
+
+.inventario-module-container .grid-action-btn.delete-btn:hover {
+  color: #ef4444;
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* Drag-and-Drop Multimedia Loader Box */
+.inventario-module-container .multimedia-upload-section {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+}
+
+.inventario-module-container .section-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inventario-module-container .upload-drag-drop-zone {
+  border: 2px dashed #d8d7d3;
+  background-color: #faf9f6;
+  border-radius: 12px;
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.inventario-module-container .upload-drag-drop-zone:hover,
+.inventario-module-container .upload-drag-drop-zone.dragging {
+  border-color: #C05640;
+  background-color: #fcfbfa;
+}
+
+.inventario-module-container .upload-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #f3eae8;
+  color: #C05640;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.inventario-module-container .upload-drag-drop-zone:hover .upload-icon-circle {
+  transform: translateY(-2px);
+}
+
+.inventario-module-container .upload-instruction-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.inventario-module-container .upload-instruction-text span {
+  color: #C05640;
+  text-decoration: underline;
+}
+
+.inventario-module-container .upload-subtext {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 380px;
+  line-height: 1.5;
+}
+
+/* Simulated upload success file listing */
+.inventario-module-container .uploaded-files-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.inventario-module-container .file-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: #faf9f6;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  position: relative;
+}
+
+.inventario-module-container .file-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.inventario-module-container .file-name-txt {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.inventario-module-container .file-size-txt {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+}
+
+.inventario-module-container .file-remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inventario-module-container .file-remove-btn:hover {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+/* Pagination Footer */
+.inventario-module-container .pagination-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.inventario-module-container .page-item-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.inventario-module-container .page-item-btn:hover:not(:disabled) {
+  background-color: #fbfbfa;
+  border-color: #d8d7d3;
+}
+
+.inventario-module-container .page-item-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.inventario-module-container .page-number-btn {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.inventario-module-container .page-number-btn:hover {
+  background-color: #f5f4f0;
+}
+
+.inventario-module-container .page-number-btn.active {
+  background-color: #C05640;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(192, 86, 64, 0.15);
+}
+
+/* Interactive Image Upload styles inside Form Modal */
+.inventario-module-container .dossier-image-upload-wrapper {
+  margin-top: 4px;
+}
+
+.inventario-module-container .image-form-placeholder {
+  border: 1px dashed #d8d7d3;
+  background-color: #faf9f6;
+  border-radius: 8px;
+  height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.inventario-module-container .image-form-placeholder:hover {
+  border-color: #C05640;
+  background-color: #fffdfc;
+  color: #C05640;
+}
+
+.inventario-module-container .image-form-placeholder span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.inventario-module-container .image-form-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: #fdfdfc;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.inventario-module-container .image-form-preview img {
+  width: 74px;
+  height: 74px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.inventario-module-container .remove-img-form-btn {
+  background-color: #fee2e2;
+  color: #ef4444;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.inventario-module-container .remove-img-form-btn:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+/* Dossier Modal Banners */
+.inventario-module-container .dossier-image-banner {
+  width: 100%;
+  height: 180px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background-color: #f5f4f0;
+}
+
+.inventario-module-container .dossier-featured-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.inventario-module-container .dossier-no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #a39996;
+}
+
+.inventario-module-container .dossier-no-image span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Scrollable checkable list for linking modal */
+.inventario-module-container .linking-scroll-panel {
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inventario-module-container .linking-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background-color: #faf9f6;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.inventario-module-container .linking-checkbox-label:hover {
+  background-color: #fbfbf9;
+  border-color: #d8d7d3;
+}
+
+.inventario-module-container .linking-checkbox-label input[type="checkbox"] {
+  accent-color: #C05640;
+  cursor: pointer;
+  width: 15px;
+  height: 15px;
+}
+
+.inventario-module-container .linking-checkbox-label .file-size {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+/* Responsive Overrides */
+@media (max-width: 900px) {
+  .inventario-module-container .filter-bar-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+  
+  .inventario-module-container .search-input-wrapper {
+    width: 100%;
+  }
+  
+  .inventario-module-container .selectors-wrapper {
+    width: 100%;
+  }
+  
+  .inventario-module-container .filter-dropdown-select {
+    flex: 1 1 calc(33.3% - 8px);
+  }
+}
+
+@media (max-width: 768px) {
+  .inventario-module-container .inventario-table th:nth-child(3),
+  .inventario-module-container .inventario-table td:nth-child(3),
+  .inventario-module-container .inventario-table th:nth-child(5),
+  .inventario-module-container .inventario-table td:nth-child(5) {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .inventario-module-container .inventario-table th:nth-child(2),
+  .inventario-module-container .inventario-table td:nth-child(2),
+  .inventario-module-container .inventario-table th:nth-child(6),
+  .inventario-module-container .inventario-table td:nth-child(6) {
+    display: none;
+  }
+  
+  .inventario-module-container .filter-dropdown-select {
+    flex: 1 1 100%;
+  }
+}
