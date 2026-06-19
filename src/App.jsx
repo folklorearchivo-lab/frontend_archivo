@@ -64,13 +64,17 @@ function App() {
     }
   ])
 
-  const handleLogin = () => {
+  const handleLogin = (data) => {
     localStorage.setItem('user-authenticated', 'true')
+    if (data?.token) {
+      localStorage.setItem('auth-token', data.token)
+    }
     setIsAuthenticated(true)
   }
 
   const handleLogout = () => {
     localStorage.removeItem('user-authenticated')
+    localStorage.removeItem('auth-token')
     setIsAuthenticated(false)
   }
 

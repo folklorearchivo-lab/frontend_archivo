@@ -8,17 +8,28 @@ import {
   Landmark
 } from 'lucide-react'
 import './Login.css'
+import { loginRequest } from '../../services/api'
 
 const Login = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('usuario@archivo.gob')
   const [password, setPassword] = useState('password123')
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Simulated authentication success
-    onLoginSuccess()
+    setError('')
+    setLoading(true)
+    try {
+      const data = await loginRequest(email, password)
+      onLoginSuccess(data)
+    } catch (err) {
+      setError(err?.message || 'Usuario o contraseña inválidos')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -44,6 +55,8 @@ const Login = ({ onLoginSuccess }) => {
         <div className="login-card">
           <h2>Iniciar Sesión</h2>
           <p className="login-card-desc">Accede al panel administrativo para la gestión de bienes culturales.</p>
+
+          {error && <p className="login-error-text">{error}</p>}
 
           <form onSubmit={handleSubmit} className="login-form">
             {/* Email Group */}
@@ -108,8 +121,8 @@ const Login = ({ onLoginSuccess }) => {
             </div>
 
             {/* Action Button */}
-            <button type="submit" className="btn-login">
-              <span>Ingresar al Sistema</span>
+            <button type="submit" className="btn-login" disabled={loading}>
+              <span>{loading ? 'Ingresando...' : 'Ingresar al Sistema'}</span>
               <ArrowRight size={18} />
             </button>
           </form>
