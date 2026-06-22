@@ -14,8 +14,10 @@ import {
 } from 'lucide-react'
 import './Layout.css'
 import adminAvatar from '../assets/admin_avatar.png'
+import ChangePasswordModal from './ChangePasswordModal'
 
 const Layout = ({ children, currentView, onViewChange, onLogout }) => {
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(() => {
     return localStorage.getItem('sidebar-collapsed') === 'true'
   })
@@ -109,7 +111,13 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="profile-badge" data-label="Administrador (Sede Principal)">
+          <div 
+            className="profile-badge" 
+            data-label="Administrador (Sede Principal)"
+            onClick={() => setIsProfileModalOpen(true)}
+            style={{ cursor: 'pointer', transition: 'background-color 0.2s' }}
+            title="Ver Perfil"
+          >
             <div className="profile-initials">AD</div>
             <div className="profile-info">
               <span className="profile-name">Administrador</span>
@@ -140,10 +148,6 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
               <Bell size={18} />
               <span className="notif-dot"></span>
             </button>
-            <div className="admin-profile">
-              <span className="admin-role">Admin</span>
-              <img src={adminAvatar} alt="Admin avatar" className="avatar-img" />
-            </div>
           </div>
         </header>
 
@@ -152,6 +156,12 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
           {children}
         </div>
       </main>
+
+      {/* Profile Modal */}
+      <ChangePasswordModal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+      />
     </div>
   )
 }

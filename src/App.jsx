@@ -7,6 +7,7 @@ import PreRegistration from './components/pages/PreRegistration'
 import InventarioPatrimonial from './components/pages/InventarioPatrimonial'
 import ReportesCatalogo from './components/pages/ReportesCatalogo'
 import Login from './components/pages/Login'
+import ResetPassword from './components/pages/ResetPassword'
 import './App.css'
 
 function App() {
@@ -75,6 +76,25 @@ function App() {
     localStorage.removeItem('user-authenticated')
     localStorage.removeItem('auth-token')
     setIsAuthenticated(false)
+  }
+
+  const [resetToken, setResetToken] = React.useState(null)
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('token')
+    if (token) {
+      setResetToken(token)
+    }
+  }, [])
+
+  const clearToken = () => {
+    setResetToken(null)
+    window.history.replaceState({}, document.title, window.location.pathname)
+  }
+
+  if (resetToken) {
+    return <ResetPassword token={resetToken} onResetSuccess={clearToken} onCancel={clearToken} />
   }
 
   if (!isAuthenticated) {
