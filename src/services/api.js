@@ -1,17 +1,16 @@
-const API_URL = import.meta.env.VITE_API_URL
+import axios from 'axios'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 export async function loginRequest(correo, password) {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ correo, password }),
-  })
-
-  const data = await response.json()
-
-  if (!response.ok) {
-    throw new Error(data.error || 'Error al iniciar sesión')
+  try {
+    const response = await axios.post(`${API_URL}/auth/login`, {
+      correo,
+      password,
+    })
+    return response.data
+  } catch (error) {
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al iniciar sesión'
+    throw new Error(errorMsg)
   }
-
-  return data
 }
