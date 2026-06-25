@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Calendar,
   Bell,
@@ -10,7 +10,9 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Menu,
+  X
 } from 'lucide-react'
 import './Layout.css'
 import adminAvatar from '../assets/admin_avatar.png'
@@ -21,6 +23,22 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     return localStorage.getItem('sidebar-collapsed') === 'true'
   })
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+
+  // Cerrar sidebar móvil al cambiar de vista
+  const handleViewChange = (view) => {
+    onViewChange(view)
+    setIsMobileOpen(false)
+  }
+
+  // Cerrar sidebar móvil con tecla Escape
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setIsMobileOpen(false)
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [])
 
   const toggleSidebar = () => {
     setIsCollapsed(prev => {
@@ -32,9 +50,28 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
 
   return (
     <div className="dashboard-container">
+
+      {/* Overlay móvil */}
+      {isMobileOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setIsMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-        {/* Toggle Button */}
+      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
+        {/* Botón cerrar (solo móvil) */}
+        <button
+          className="sidebar-close-btn"
+          onClick={() => setIsMobileOpen(false)}
+          aria-label="Cerrar menú"
+        >
+          <X size={20} />
+        </button>
+
+        {/* Toggle Button (solo desktop) */}
         <button
           className="sidebar-toggle-btn"
           onClick={toggleSidebar}
@@ -53,7 +90,7 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
 
         <nav className="sidebar-nav">
           <button
-            onClick={() => onViewChange('dashboard')}
+            onClick={() => handleViewChange('dashboard')}
             className={`nav-item nav-btn ${currentView === 'dashboard' ? 'active' : ''}`}
             data-label="Dashboard"
           >
@@ -61,7 +98,7 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
             <span>Dashboard</span>
           </button>
           <button
-            onClick={() => onViewChange('usuarios')}
+            onClick={() => handleViewChange('usuarios')}
             className={`nav-item nav-btn ${currentView === 'usuarios' ? 'active' : ''}`}
             data-label="Gestión de Usuarios"
           >
@@ -69,7 +106,7 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
             <span>Gestión de Usuarios</span>
           </button>
           <button
-            onClick={() => onViewChange('cultores')}
+            onClick={() => handleViewChange('cultores')}
             className={`nav-item nav-btn ${currentView === 'cultores' ? 'active' : ''}`}
             data-label="Directorio de Cultores"
           >
@@ -77,7 +114,7 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
             <span>Directorio de Cultores</span>
           </button>
           <button
-            onClick={() => onViewChange('preregistro')}
+            onClick={() => handleViewChange('preregistro')}
             className={`nav-item nav-btn ${currentView === 'preregistro' ? 'active' : ''}`}
             data-label="Pre-registro"
           >
@@ -85,7 +122,7 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
             <span>Pre-registro</span>
           </button>
           <button
-            onClick={() => onViewChange('patrimonio')}
+            onClick={() => handleViewChange('patrimonio')}
             className={`nav-item nav-btn ${currentView === 'patrimonio' ? 'active' : ''}`}
             data-label="Inventario Patrimonial"
           >
@@ -93,7 +130,7 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
             <span>Inventario Patrimonial</span>
           </button>
           <button
-            onClick={() => onViewChange('difusion')}
+            onClick={() => handleViewChange('difusion')}
             className={`nav-item nav-btn ${currentView === 'difusion' ? 'active' : ''}`}
             data-label="Difusión y Galería"
           >
@@ -101,7 +138,7 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
             <span>Difusión y Galería</span>
           </button>
           <button
-            onClick={() => onViewChange('reportes')}
+            onClick={() => handleViewChange('reportes')}
             className={`nav-item nav-btn ${currentView === 'reportes' ? 'active' : ''}`}
             data-label="Reportes y Catálogo"
           >
@@ -111,8 +148,8 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
         </nav>
 
         <div className="sidebar-footer">
-          <div 
-            className="profile-badge" 
+          <div
+            className="profile-badge"
             data-label="Administrador (Sede Principal)"
             onClick={() => setIsProfileModalOpen(true)}
             style={{ cursor: 'pointer', transition: 'background-color 0.2s' }}
@@ -124,8 +161,8 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
               <span className="profile-location">SEDE PRINCIPAL</span>
             </div>
           </div>
-          <button 
-            className="sidebar-logout-btn" 
+          <button
+            className="sidebar-logout-btn"
             onClick={onLogout}
             title="Cerrar sesión"
             data-label="Cerrar sesión"
@@ -140,6 +177,15 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
       <main className="main-content">
         {/* Top Header */}
         <header className="topbar">
+          {/* Botón hamburguesa (solo móvil) */}
+          <button
+            className="hamburger-btn"
+            onClick={() => setIsMobileOpen(true)}
+            aria-label="Abrir menú"
+          >
+            <Menu size={22} />
+          </button>
+
           <div className="topbar-actions" style={{ marginLeft: 'auto' }}>
             <button className="icon-btn" aria-label="Calendario">
               <Calendar size={18} />
@@ -158,9 +204,9 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
       </main>
 
       {/* Profile Modal */}
-      <ChangePasswordModal 
-        isOpen={isProfileModalOpen} 
-        onClose={() => setIsProfileModalOpen(false)} 
+      <ChangePasswordModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
       />
     </div>
   )
