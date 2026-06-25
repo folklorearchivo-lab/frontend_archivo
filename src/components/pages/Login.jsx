@@ -1,7 +1,5 @@
 import React, { useState } from 'react'
 import {
-  Mail,
-  Lock,
   Eye,
   EyeOff,
   ArrowRight,
@@ -82,7 +80,6 @@ const Login = ({ onLoginSuccess }) => {
               <div className="form-group">
                 <label className="form-label" htmlFor="forgot-email">Correo Institucional</label>
                 <div className="input-wrapper">
-                  <Mail className="input-icon" size={18} />
                   <input 
                     id="forgot-email"
                     type="email" 
@@ -99,7 +96,7 @@ const Login = ({ onLoginSuccess }) => {
                 <ArrowRight size={18} />
               </button>
 
-              <div className="text-center" style={{ marginTop: '15px', textAlign: 'center' }}>
+              <div style={{ marginTop: '15px', textAlign: 'center' }}>
                 <button 
                   type="button" 
                   onClick={() => {
@@ -126,7 +123,6 @@ const Login = ({ onLoginSuccess }) => {
               <div className="form-group">
                 <label className="form-label" htmlFor="email">Correo Institucional</label>
                 <div className="input-wrapper">
-                  <Mail className="input-icon" size={18} />
                   <input 
                     id="email"
                     type="email" 
@@ -142,7 +138,6 @@ const Login = ({ onLoginSuccess }) => {
               <div className="form-group">
                 <label className="form-label" htmlFor="password">Contraseña</label>
                 <div className="input-wrapper">
-                  <Lock className="input-icon" size={18} />
                   <input 
                     id="password"
                     type={showPassword ? 'text' : 'password'} 
