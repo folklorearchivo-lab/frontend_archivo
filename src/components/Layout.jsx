@@ -12,7 +12,8 @@ import {
   ChevronRight,
   LogOut,
   Menu,
-  X
+  X,
+  Lock
 } from 'lucide-react'
 import './Layout.css'
 import adminAvatar from '../assets/admin_avatar.png'
@@ -151,9 +152,7 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
           <div
             className="profile-badge"
             data-label="Administrador (Sede Principal)"
-            onClick={() => setIsProfileModalOpen(true)}
-            style={{ cursor: 'pointer', transition: 'background-color 0.2s' }}
-            title="Ver Perfil"
+            title="Administrador"
           >
             <div className="profile-initials">AD</div>
             <div className="profile-info">
@@ -161,6 +160,15 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
               <span className="profile-location">SEDE PRINCIPAL</span>
             </div>
           </div>
+          <button
+            className="sidebar-changepw-btn"
+            onClick={() => setIsProfileModalOpen(true)}
+            title="Cambiar contraseña"
+            data-label="Cambiar contraseña"
+          >
+            <Lock size={16} />
+            <span>Cambiar Contraseña</span>
+          </button>
           <button
             className="sidebar-logout-btn"
             onClick={onLogout}

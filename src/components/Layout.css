@@ -265,6 +265,67 @@ body {
   gap: 16px;
 }
 
+.sidebar-changepw-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid rgba(192, 86, 64, 0.3);
+  border-radius: 8px;
+  color: var(--orange-accent);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.sidebar-changepw-btn:hover {
+  background-color: var(--orange-accent);
+  color: #ffffff;
+}
+
+.sidebar.collapsed .sidebar-changepw-btn span {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-changepw-btn {
+  justify-content: center;
+  padding: 10px;
+  position: relative;
+}
+
+.sidebar.collapsed .sidebar-changepw-btn::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%) translateX(10px);
+  margin-left: 14px;
+  background-color: var(--sidebar-bg);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 999;
+  pointer-events: none;
+}
+
+.sidebar.collapsed .sidebar-changepw-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
 .sidebar-logout-btn {
   display: flex;
   align-items: center;
@@ -843,9 +904,12 @@ body {
   .sidebar.collapsed .profile-badge::after      { display: none !important; }
   .sidebar.collapsed .profile-info              { opacity: 1 !important; position: static !important; transform: none !important; pointer-events: auto !important; }
   .sidebar.collapsed .sidebar-footer            { display: flex !important; padding: 24px !important; }
+  .sidebar.collapsed .sidebar-changepw-btn      { justify-content: flex-start !important; padding: 10px 12px !important; }
+  .sidebar.collapsed .sidebar-changepw-btn span { display: inline !important; }
+  .sidebar.collapsed .sidebar-changepw-btn::after { display: none !important; }
   .sidebar.collapsed .sidebar-logout-btn        { justify-content: flex-start !important; padding: 10px 12px !important; }
-  .sidebar.collapsed .sidebar-logout-btn span   { display: inline !important; }
-  .sidebar.collapsed .sidebar-logout-btn::after { display: none !important; }
+  .sidebar.collapsed .sidebar-logout-btn span     { display: inline !important; }
+  .sidebar.collapsed .sidebar-logout-btn::after   { display: none !important; }
 
   /* Ocultar botón toggle de desktop */
   .sidebar-toggle-btn { display: none !important; }
