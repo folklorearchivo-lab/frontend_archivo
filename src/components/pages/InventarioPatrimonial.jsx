@@ -83,6 +83,9 @@ const InventarioPatrimonial = () => {
   const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [customCategory, setCustomCategory] = useState('')
 
+  const [isStandaloneCategoryModalOpen, setIsStandaloneCategoryModalOpen] = useState(false)
+  const [standaloneCategoryName, setStandaloneCategoryName] = useState('')
+
   const handleAddCategory = () => {
     if (customCategory.trim() && !categoriesList.includes(customCategory.trim())) {
       setCategoriesList([...categoriesList, customCategory.trim()])
@@ -390,10 +393,16 @@ const InventarioPatrimonial = () => {
           </p>
         </div>
 
-        <button className="btn-terracota" onClick={handleOpenCreateModal}>
-          <Plus size={16} />
-          <span>Nueva Obra / Pieza</span>
-        </button>
+        <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
+          <button className="btn-secondary" onClick={() => setIsStandaloneCategoryModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '8px', border: '1px solid #D2C5B4', backgroundColor: 'transparent', color: '#8B5A2B', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }}>
+            <FolderOpen size={16} />
+            <span>Nueva Categoría</span>
+          </button>
+          <button className="btn-terracota" onClick={handleOpenCreateModal}>
+            <Plus size={16} />
+            <span>Nueva Obra / Pieza</span>
+          </button>
+        </div>
       </header>
 
       {/* 2. Barra de Filtros y Búsqueda */}
@@ -776,35 +785,15 @@ const InventarioPatrimonial = () => {
                 <div className="fields-split-row">
                   <div className="input-box-field">
                     <label htmlFor="modal-piece-category">Categoría</label>
-                    <div className="icon-input-container" style={{ display: 'flex', gap: '8px' }}>
-                      {isAddingCategory ? (
-                        <>
-                          <input 
-                            type="text" 
-                            placeholder="Nueva categoría..." 
-                            value={customCategory} 
-                            onChange={(e) => setCustomCategory(e.target.value)} 
-                            style={{ flex: 1 }}
-                            autoFocus
-                          />
-                          <button type="button" className="btn-terracota" onClick={handleAddCategory} style={{ padding: '0 10px', height: '100%', borderRadius: '6px' }}>✓</button>
-                          <button type="button" className="btn-secondary" onClick={() => setIsAddingCategory(false)} style={{ padding: '0 10px', height: '100%', borderRadius: '6px' }}>✕</button>
-                        </>
-                      ) : (
-                        <>
-                          <select 
-                            id="modal-piece-category"
-                            value={newPieceCategory}
-                            onChange={(e) => setNewPieceCategory(e.target.value)}
-                            style={{ flex: 1 }}
-                          >
-                            {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                          <button type="button" className="btn-terracota" onClick={() => setIsAddingCategory(true)} style={{ padding: '0 10px', height: '100%', borderRadius: '6px' }} title="Añadir categoría">
-                            <Plus size={16} />
-                          </button>
-                        </>
-                      )}
+                    <div className="icon-input-container">
+                      <select 
+                        id="modal-piece-category"
+                        value={newPieceCategory}
+                        onChange={(e) => setNewPieceCategory(e.target.value)}
+                        style={{ flex: 1 }}
+                      >
+                        {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
                     </div>
                   </div>
 
@@ -898,6 +887,58 @@ const InventarioPatrimonial = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 8. Modal de Nueva Categoría (Standalone) */}
+      {isStandaloneCategoryModalOpen && (
+        <div className="modal-overlay-backdrop">
+          <div className="modal-box-card" style={{ maxWidth: '400px' }}>
+            <div className="modal-box-header">
+              <h2>Añadir Nueva Categoría</h2>
+              <button 
+                onClick={() => setIsStandaloneCategoryModalOpen(false)}
+                className="close-x-btn"
+                aria-label="Cerrar modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-box-body">
+              <div className="input-box-field">
+                <label htmlFor="standalone-category-name">Nombre de la Categoría <span className="req-star">*</span></label>
+                <div className="icon-input-container">
+                  <FolderOpen size={15} className="field-icon-left" />
+                  <input 
+                    type="text" 
+                    id="standalone-category-name" 
+                    placeholder="Ej. Fotografía Histórica"
+                    value={standaloneCategoryName}
+                    onChange={(e) => setStandaloneCategoryName(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="modal-box-footer">
+              <button type="button" className="btn-secondary" onClick={() => { setIsStandaloneCategoryModalOpen(false); setStandaloneCategoryName(''); }}>
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                className="btn-terracota" 
+                onClick={() => {
+                  if (standaloneCategoryName.trim() && !categoriesList.includes(standaloneCategoryName.trim())) {
+                    setCategoriesList([...categoriesList, standaloneCategoryName.trim()]);
+                  }
+                  setStandaloneCategoryName('');
+                  setIsStandaloneCategoryModalOpen(false);
+                }}
+              >
+                Guardar Categoría
+              </button>
+            </div>
           </div>
         </div>
       )}

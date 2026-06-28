@@ -7,7 +7,7 @@ import Textarea from './form/Textarea'
 import Dropzone from './form/Dropzone'
 import Checkbox from './form/Checkbox'
 import Radio from './form/Radio'
-import { ingresoManualCultorRequest, subirCedulaCultorRequest, getParroquiasRequest } from '../services/api'
+import { ingresoManualCultorRequest, subirCedulaCultorRequest, getParroquiasByMunicipioRequest, getMunicipiosRequest, getOficiosRequest } from '../services/api'
 import { enviarCredenciales } from '../services/emailNotifications'
 
 // Copia adaptada de RegisterForm.jsx (vite-project, web pública), mismos campos —
@@ -15,25 +15,6 @@ import { enviarCredenciales } from '../services/emailNotifications'
 // POST /api/cultores/ingreso-manual: el cultor queda APROBADO de inmediato (no
 // 'pendiente') y el backend crea su Usuario+contraseña en la misma llamada. Por eso,
 // al tener éxito, se dispara el correo de credenciales — no pasa por Pre-registro.
-
-const municipios = [
-  'San Cristóbal',
-  'Capacho (Libertador)',
-  'Independencia',
-  'Lobatera',
-  'Pregonero',
-  'Queniquea',
-  'Rubio',
-]
-
-const oficios = [
-  'Alfarería y cerámica',
-  'Cestería',
-  'Talla en madera',
-  'Textiles y tejidos',
-  'Pintura popular',
-  'Marroquinería',
-]
 
 const generos = ['Femenino', 'Masculino', 'Otro']
 
@@ -128,14 +109,23 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
   // manualmente (mismo patrón que ya usa PreRegistration.jsx).
   const [credencialesSinNotificar, setCredencialesSinNotificar] = useState(null)
 
-  // Parroquias para el <select> de id_parroquia (ruta pública, sin auth)
+  // Municipios de la BD (ruta pública)
+  const [municipiosList, setMunicipiosList] = useState([])
+  // Parroquias filtradas por municipio (ruta pública)
   const [parroquias, setParroquias] = useState([])
+
+  // Oficios de la BD (ruta pública)
+  const [oficiosList, setOficiosList] = useState([])
 
   useEffect(() => {
     if (!isOpen) return
-    getParroquiasRequest()
-      .then(setParroquias)
-      .catch(() => setParroquias([]))
+    getMunicipiosRequest()
+      .then(setMunicipiosList)
+      .catch(() => setMunicipiosList([]))
+    
+    getOficiosRequest()
+      .then(setOficiosList)
+      .catch(() => setOficiosList([]))
   }, [isOpen])
 
   if (!isOpen) return null;
@@ -146,6 +136,18 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
       setForm((prev) => ({ ...prev, [name]: value }))
     } else {
       setCamposVisuales((prev) => ({ ...prev, [name]: value }))
+    }
+
+    if (name === 'municipio') {
+      // Resetear parroquia si cambia el municipio
+      setForm((prev) => ({ ...prev, id_parroquia: '' }))
+      if (value) {
+        getParroquiasByMunicipioRequest(value)
+          .then(setParroquias)
+          .catch(() => setParroquias([]))
+      } else {
+        setParroquias([])
+      }
     }
   }
 
@@ -315,7 +317,7 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
                 <span className="font-sans text-xs font-semibold uppercase tracking-wide text-cafe-noir">
                   Cédula de identidad <span> *</span>
                 </span>
-                <div className="flex items-center w-full bg-transparent border border-[#D2C5B4] rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-[#8B5A2B]">
+                <div className="flex items-center w-full bg-white/50 border border-cafe-noir/30 rounded-xl overflow-hidden focus-within:border-cafe-noir focus-within:ring-1 focus-within:ring-cafe-noir transition-colors">
                   <select
                     value={cedulaPrefijo}
                     onChange={(e) => setCedulaPrefijo(e.target.value)}
@@ -363,7 +365,10 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
                 required
                 value={camposVisuales.municipio}
                 onChange={handleChange}
-                options={municipios}
+                options={municipiosList.map((mun) => ({
+                  value: mun.id_municipio,
+                  label: mun.nombre,
+                }))}
               />
               <SelectInput
                 label="Parroquia de residencia"
@@ -374,6 +379,7 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
                   value: parroquia.id_parroquia,
                   label: parroquia.nombre,
                 }))}
+                disabled={!camposVisuales.municipio || parroquias.length === 0}
               />
               <TextInput
                 label="Dirección de residencia"
@@ -386,7 +392,7 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
                 <span className="font-sans text-xs font-semibold uppercase tracking-wide text-cafe-noir">
                   Teléfono de contacto
                 </span>
-                <div className="flex items-center w-full bg-transparent border border-[#D2C5B4] rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-[#8B5A2B]">
+                <div className="flex items-center w-full bg-white/50 border border-cafe-noir/30 rounded-xl overflow-hidden focus-within:border-cafe-noir focus-within:ring-1 focus-within:ring-cafe-noir transition-colors">
                   <select
                     value={telefonoPrefijo}
                     onChange={(e) => setTelefonoPrefijo(e.target.value)}
@@ -451,7 +457,10 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
                 required
                 value={camposVisuales.oficio}
                 onChange={handleChange}
-                options={oficios}
+                options={oficiosList.map((o) => ({
+                  value: o.nombre,
+                  label: o.nombre,
+                }))}
               />
               <TextInput
                 label="Especialidad"

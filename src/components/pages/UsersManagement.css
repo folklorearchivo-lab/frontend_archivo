@@ -205,9 +205,9 @@
   letter-spacing: 0.2px;
 }
 
-.role-tag.admin {
-  background-color: #f1f0ee;
-  color: #3b2c28;
+.role-tag.administrador {
+  background-color: var(--orange-bg-light);
+  color: var(--orange-accent);
 }
 
 .role-tag.cultor {

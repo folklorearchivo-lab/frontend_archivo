@@ -201,6 +201,39 @@ export async function getParroquiasRequest() {
   }
 }
 
+// Lista de parroquias filtradas por municipio
+export async function getParroquiasByMunicipioRequest(idMunicipio) {
+  try {
+    const response = await axios.get(`${API_URL}/parroquias/municipio/${idMunicipio}`)
+    return response.data
+  } catch (error) {
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al obtener las parroquias filtradas'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// Lista de oficios
+export async function getOficiosRequest() {
+  try {
+    const response = await axios.get(`${API_URL}/oficios`)
+    return response.data
+  } catch (error) {
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al obtener los oficios'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// Lista de municipios
+export async function getMunicipiosRequest() {
+  try {
+    const response = await axios.get(`${API_URL}/municipios`)
+    return response.data
+  } catch (error) {
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al obtener los municipios'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
 // Aprobar o rechazar la postulación de un cultor
 export async function actualizarEstatusCultorRequest(idCultor, estatus, token) {
   exigirToken(token)
