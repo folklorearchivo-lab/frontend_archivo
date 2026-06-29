@@ -6,7 +6,12 @@ import {
   Image as ImageIcon
 } from 'lucide-react'
 import './PreRegistration.css'
-import { getPostulacionesCultoresRequest, actualizarEstatusCultorRequest } from '../../services/api'
+import { 
+  getPostulacionesCultoresRequest, 
+  actualizarEstatusCultorRequest, 
+  getObrasAdminRequest, 
+  updateObraEstatusRequest 
+} from '../../services/api'
 import { enviarCredenciales } from '../../services/emailNotifications'
 
 // Columnas de imagen reales en el modelo Cultores. Hoy siempre vendrán vacías
@@ -18,8 +23,12 @@ const CAMPOS_IMAGEN = [
 ]
 
 const PreRegistration = () => {
+  const [activeTab, setActiveTab] = useState('cultores') // 'cultores' | 'obras'
+
   // Postulaciones reales (estatus = 'pendiente'), traídas del backend
   const [registros, setRegistros] = useState([])
+  const [obrasPendientes, setObrasPendientes] = useState([])
+  
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
 
@@ -35,9 +44,12 @@ const PreRegistration = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [filtroCertificacion, setFiltroCertificacion] = useState('todos')
 
-  // Modal de expediente
+  // Modales de expediente
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [registroSeleccionado, setRegistroSeleccionado] = useState(null)
+  
+  const [isObraModalOpen, setIsObraModalOpen] = useState(false)
+  const [obraSeleccionada, setObraSeleccionada] = useState(null)
 
   // Si el token venció o es inválido, limpia la sesión guardada y recarga: App.jsx
   // detecta que ya no hay 'user-authenticated' y vuelve a mostrar el Login.
@@ -73,14 +85,77 @@ const PreRegistration = () => {
     }
   }
 
+  const cargarObrasPendientes = async () => {
+    setIsLoading(true)
+    setLoadError('')
+
+    const token = localStorage.getItem('auth-token')
+    if (!token) {
+      setLoadError('No hay una sesión activa. Inicia sesión nuevamente.')
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const data = await getObrasAdminRequest(token, 'pendiente')
+      setObrasPendientes(data)
+    } catch (error) {
+      if (error.isAuthError) {
+        setLoadError(error.message)
+        forzarRelogin()
+        return
+      }
+      setLoadError(error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   useEffect(() => {
-    cargarPostulaciones()
-  }, [])
+    setSearchQuery('')
+    if (activeTab === 'cultores') {
+      cargarPostulaciones()
+    } else {
+      cargarObrasPendientes()
+    }
+  }, [activeTab])
 
   const nombreCompleto = (registro) =>
     [registro.primer_nombre, registro.segundo_nombre, registro.primer_apellido, registro.segundo_apellido]
       .filter(Boolean)
       .join(' ')
+
+  const aplicarEstatusObra = async (idObra, estatus) => {
+    setActionError('')
+    const token = localStorage.getItem('auth-token')
+    if (!token) {
+      setActionError('No hay una sesión activa. Inicia sesión nuevamente.')
+      return
+    }
+
+    setProcesandoId(idObra)
+    try {
+      await updateObraEstatusRequest(idObra, estatus, token)
+      setObrasPendientes((prev) => prev.filter((obra) => obra.id_obra !== idObra))
+
+      if (obraSeleccionada?.id_obra === idObra) {
+        setIsObraModalOpen(false)
+        setObraSeleccionada(null)
+      }
+    } catch (error) {
+      if (error.isAuthError) {
+        setActionError(error.message)
+        forzarRelogin()
+        return
+      }
+      setActionError(error.message)
+    } finally {
+      setProcesandoId(null)
+    }
+  }
+
+  const handleAprobarObra = (idObra) => aplicarEstatusObra(idObra, 'aprobado')
+  const handleRechazarObra = (idObra) => aplicarEstatusObra(idObra, 'rechazado')
 
   // Saca el registro de la lista en memoria al recibir 200 OK, sin recargar la página
   const aplicarCambioDeEstatus = async (idCultor, estatus) => {
@@ -135,7 +210,7 @@ const PreRegistration = () => {
     return `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase() || '--'
   }
 
-  // Filtrado combinado: texto (nombre/cédula) Y píldora de certificación
+  // Filtrado combinado: texto (nombre/cédula) Y píldora de certificación (para cultores)
   const registrosFiltrados = registros.filter((registro) => {
     const term = searchQuery.toLowerCase()
     const coincideTexto =
@@ -150,6 +225,17 @@ const PreRegistration = () => {
     return coincideTexto && coincideCertificacion
   })
 
+  // Filtrado simple por búsqueda para obras
+  const obrasFiltradas = obrasPendientes.filter((obra) => {
+    const term = searchQuery.toLowerCase()
+    const autorNombre = obra.cultor ? `${obra.cultor.primer_nombre} ${obra.cultor.primer_apellido}` : ''
+    return (
+      (obra.titulo || '').toLowerCase().includes(term) ||
+      (obra.codigo_qr_link || '').toLowerCase().includes(term) ||
+      autorNombre.toLowerCase().includes(term)
+    )
+  })
+
   return (
     <div className="prereg-module-container">
       {/* 1. Cabecera de la Sección */}
@@ -158,11 +244,11 @@ const PreRegistration = () => {
           <nav className="breadcrumbs">
             <span>ARCHIVO</span>
             <span className="separator">&gt;</span>
-            <span className="current">PRE-REGISTRO</span>
+            <span className="current">SOLICITUDES DE REGISTRO</span>
           </nav>
-          <h1>Pre-registro de Cultores</h1>
+          <h1>Solicitudes de Registro</h1>
           <p className="cultor-subinfo text-light" style={{ fontSize: '14px', marginTop: '4px' }}>
-            Postulaciones recibidas desde la web pública, pendientes de validación administrativa.
+            Postulaciones de cultores y obras recibidas desde la web pública, pendientes de validación.
           </p>
         </div>
       </header>
@@ -173,29 +259,80 @@ const PreRegistration = () => {
         </div>
       )}
 
-      {/* 2. Barra unificada: píldoras de filtro (izquierda) + búsqueda (derecha) */}
+      {/* 2. Tabs de navegación entre Cultores y Obras */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '2px solid var(--border-light)', paddingBottom: '0' }}>
+        <button
+          onClick={() => setActiveTab('cultores')}
+          style={{
+            padding: '8px 20px',
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'cultores' ? 700 : 400,
+            borderBottom: activeTab === 'cultores' ? '2px solid var(--primary)' : '2px solid transparent',
+            marginBottom: '-2px',
+            color: activeTab === 'cultores' ? 'var(--primary)' : 'var(--text-secondary)',
+            fontSize: '14px',
+            transition: 'all 0.2s',
+          }}
+        >
+          Cultores Pendientes
+          {registros.length > 0 && (
+            <span style={{ marginLeft: '8px', background: 'var(--primary)', color: '#fff', borderRadius: '999px', padding: '1px 7px', fontSize: '11px' }}>
+              {registros.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('obras')}
+          style={{
+            padding: '8px 20px',
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'obras' ? 700 : 400,
+            borderBottom: activeTab === 'obras' ? '2px solid var(--primary)' : '2px solid transparent',
+            marginBottom: '-2px',
+            color: activeTab === 'obras' ? 'var(--primary)' : 'var(--text-secondary)',
+            fontSize: '14px',
+            transition: 'all 0.2s',
+          }}
+        >
+          Obras Pendientes
+          {obrasPendientes.length > 0 && (
+            <span style={{ marginLeft: '8px', background: '#d97706', color: '#fff', borderRadius: '999px', padding: '1px 7px', fontSize: '11px' }}>
+              {obrasPendientes.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* 3. Barra de búsqueda + filtros de certificación (solo para cultores) */}
+
       <section className="filter-bar-card">
-        <div className="category-pills">
-          {[
-            { id: 'todos', label: 'Todos' },
-            { id: 'certificados', label: 'Certificados' },
-            { id: 'no_certificados', label: 'No Certificados' },
-          ].map((opcion) => (
-            <button
-              key={opcion.id}
-              className={`category-pill ${filtroCertificacion === opcion.id ? 'active' : ''}`}
-              onClick={() => setFiltroCertificacion(opcion.id)}
-            >
-              {opcion.label}
-            </button>
-          ))}
-        </div>
+        {activeTab === 'cultores' && (
+          <div className="category-pills">
+            {[
+              { id: 'todos', label: 'Todos' },
+              { id: 'certificados', label: 'Certificados' },
+              { id: 'no_certificados', label: 'No Certificados' },
+            ].map((opcion) => (
+              <button
+                key={opcion.id}
+                className={`category-pill ${filtroCertificacion === opcion.id ? 'active' : ''}`}
+                onClick={() => setFiltroCertificacion(opcion.id)}
+              >
+                {opcion.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="search-input-wrapper">
           <Search className="search-input-icon" size={16} />
           <input
             type="text"
-            placeholder="Buscar por nombre o cédula..."
+            placeholder={activeTab === 'cultores' ? 'Buscar por nombre o cédula...' : 'Buscar por título, código o autor...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -211,112 +348,109 @@ const PreRegistration = () => {
         </div>
       </section>
 
-      {/* 3. Tabla de Postulaciones */}
-      <div className="card cultores-list-card">
-        <div className="table-responsive">
-          <table className="cultores-table">
-            <thead>
-              <tr>
-                <th>CULTOR</th>
-                <th>CÉDULA</th>
-                <th>CORREO DE CONTACTO</th>
-                <th>FECHA DE POSTULACIÓN</th>
-                <th className="text-right">ACCIONES</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
+      {/* 4. Tabla de Postulaciones — condicional por pestaña activa */}
+      {activeTab === 'cultores' ? (
+        <div className="card cultores-list-card">
+          <div className="table-responsive">
+            <table className="cultores-table">
+              <thead>
                 <tr>
-                  <td colSpan="5">
-                    <div className="empty-grid-state">
-                      <p className="empty-grid-title">Cargando postulaciones...</p>
-                    </div>
-                  </td>
+                  <th>CULTOR</th>
+                  <th>CÉDULA</th>
+                  <th>CORREO DE CONTACTO</th>
+                  <th>FECHA DE POSTULACIÓN</th>
+                  <th className="text-right">ACCIONES</th>
                 </tr>
-              ) : loadError ? (
-                <tr>
-                  <td colSpan="5">
-                    <div className="empty-grid-state">
-                      <p className="empty-grid-title">No se pudieron cargar las postulaciones</p>
-                      <p className="empty-grid-desc">{loadError}</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : registrosFiltrados.length > 0 ? (
-                registrosFiltrados.map((registro) => (
-                  <tr key={registro.id_cultor}>
-                    <td>
-                      <div
-                        className="cultor-profile-cell clickable"
-                        onClick={() => {
-                          setRegistroSeleccionado(registro)
-                          setIsViewModalOpen(true)
-                        }}
-                      >
-                        <div className="cultor-avatar-badge">
-                          {getInitials(registro)}
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr><td colSpan="5"><div className="empty-grid-state"><p className="empty-grid-title">Cargando...</p></div></td></tr>
+                ) : loadError ? (
+                  <tr><td colSpan="5"><div className="empty-grid-state"><p className="empty-grid-title">Error al cargar</p><p className="empty-grid-desc">{loadError}</p></div></td></tr>
+                ) : registrosFiltrados.length > 0 ? (
+                  registrosFiltrados.map((registro) => (
+                    <tr key={registro.id_cultor}>
+                      <td>
+                        <div className="cultor-profile-cell clickable" onClick={() => { setRegistroSeleccionado(registro); setIsViewModalOpen(true) }}>
+                          <div className="cultor-avatar-badge">{getInitials(registro)}</div>
+                          <span className="cultor-display-name">{nombreCompleto(registro)}</span>
                         </div>
-                        <span className="cultor-display-name">
-                          {nombreCompleto(registro)}
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="cultor-subinfo">{registro.cedula || '—'}</span>
-                    </td>
-                    <td>
-                      <span className="cultor-subinfo">{registro.correo_contacto || '—'}</span>
-                    </td>
-                    <td>
-                      <span className="cultor-subinfo">
-                        {registro.fecha_registro ? new Date(registro.fecha_registro).toLocaleDateString() : '—'}
-                      </span>
-                    </td>
-                    <td className="text-right">
-                      <div className="grid-actions-row">
-                        <button
-                          className="grid-action-btn"
-                          title="Revisar Expediente"
-                          onClick={() => {
-                            setRegistroSeleccionado(registro)
-                            setIsViewModalOpen(true)
-                          }}
-                        >
-                          <FolderOpen size={16} />
-                        </button>
-                        <button
-                          className="btn-reject"
-                          disabled={procesandoId === registro.id_cultor}
-                          onClick={() => handleRechazar(registro.id_cultor)}
-                        >
-                          {procesandoId === registro.id_cultor ? '...' : 'Rechazar'}
-                        </button>
-                        <button
-                          className="btn-approve"
-                          disabled={procesandoId === registro.id_cultor}
-                          onClick={() => handleAprobar(registro.id_cultor)}
-                        >
-                          {procesandoId === registro.id_cultor ? '...' : 'Aprobar'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5">
-                    <div className="empty-grid-state">
-                      <FolderOpen size={40} />
-                      <p className="empty-grid-title">No hay pre-registros pendientes</p>
-                      <p className="empty-grid-desc">Todas las postulaciones han sido validadas.</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                      </td>
+                      <td><span className="cultor-subinfo">{registro.cedula || '—'}</span></td>
+                      <td><span className="cultor-subinfo">{registro.correo_contacto || '—'}</span></td>
+                      <td><span className="cultor-subinfo">{registro.fecha_registro ? new Date(registro.fecha_registro).toLocaleDateString() : '—'}</span></td>
+                      <td className="text-right">
+                        <div className="grid-actions-row">
+                          <button className="grid-action-btn" title="Revisar Expediente" onClick={() => { setRegistroSeleccionado(registro); setIsViewModalOpen(true) }}><FolderOpen size={16} /></button>
+                          <button className="btn-reject" disabled={procesandoId === registro.id_cultor} onClick={() => handleRechazar(registro.id_cultor)}>{procesandoId === registro.id_cultor ? '...' : 'Rechazar'}</button>
+                          <button className="btn-approve" disabled={procesandoId === registro.id_cultor} onClick={() => handleAprobar(registro.id_cultor)}>{procesandoId === registro.id_cultor ? '...' : 'Aprobar'}</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan="5"><div className="empty-grid-state"><FolderOpen size={40} /><p className="empty-grid-title">No hay postulaciones pendientes</p><p className="empty-grid-desc">Todas las postulaciones han sido validadas.</p></div></td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      ) : (
+        /* ===== PESTAÑA OBRAS PENDIENTES ===== */
+        <div className="card cultores-list-card">
+          <div className="table-responsive">
+            <table className="cultores-table">
+              <thead>
+                <tr>
+                  <th>OBRA</th>
+                  <th>CÓDIGO</th>
+                  <th>AUTOR</th>
+                  <th>FECHA DE POSTULACIÓN</th>
+                  <th className="text-right">ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr><td colSpan="5"><div className="empty-grid-state"><p className="empty-grid-title">Cargando obras...</p></div></td></tr>
+                ) : loadError ? (
+                  <tr><td colSpan="5"><div className="empty-grid-state"><p className="empty-grid-title">Error al cargar</p><p className="empty-grid-desc">{loadError}</p></div></td></tr>
+                ) : obrasFiltradas.length > 0 ? (
+                  obrasFiltradas.map((obra) => {
+                    const imagenUrl = obra.multimedia && obra.multimedia[0] ? obra.multimedia[0].url_archivo : null
+                    const autorNombre = obra.cultor ? `${obra.cultor.primer_nombre} ${obra.cultor.primer_apellido}` : '—'
+                    return (
+                      <tr key={obra.id_obra}>
+                        <td>
+                          <div className="cultor-profile-cell clickable" onClick={() => { setObraSeleccionada(obra); setIsObraModalOpen(true) }}>
+                            {imagenUrl ? (
+                              <img src={imagenUrl} alt={obra.titulo} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} />
+                            ) : (
+                              <div className="cultor-avatar-badge" style={{ fontSize: '10px' }}><ImageIcon size={16} /></div>
+                            )}
+                            <span className="cultor-display-name" style={{ textTransform: 'capitalize' }}>{obra.titulo || '—'}</span>
+                          </div>
+                        </td>
+                        <td><span className="cultor-subinfo">{obra.codigo_qr_link || '—'}</span></td>
+                        <td><span className="cultor-subinfo">{autorNombre}</span></td>
+                        <td><span className="cultor-subinfo">{obra.fecha_postulacion ? new Date(obra.fecha_postulacion).toLocaleDateString() : '—'}</span></td>
+                        <td className="text-right">
+                          <div className="grid-actions-row">
+                            <button className="grid-action-btn" title="Ver Detalle" onClick={() => { setObraSeleccionada(obra); setIsObraModalOpen(true) }}><FolderOpen size={16} /></button>
+                            <button className="btn-reject" disabled={procesandoId === obra.id_obra} onClick={() => handleRechazarObra(obra.id_obra)}>{procesandoId === obra.id_obra ? '...' : 'Rechazar'}</button>
+                            <button className="btn-approve" disabled={procesandoId === obra.id_obra} onClick={() => handleAprobarObra(obra.id_obra)}>{procesandoId === obra.id_obra ? '...' : 'Aprobar'}</button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                ) : (
+                  <tr><td colSpan="5"><div className="empty-grid-state"><FolderOpen size={40} /><p className="empty-grid-title">No hay obras pendientes</p><p className="empty-grid-desc">Todas las obras han sido revisadas.</p></div></td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* 4. Ver Expediente / Modal de Verificación */}
       {isViewModalOpen && registroSeleccionado && (
@@ -487,7 +621,59 @@ const PreRegistration = () => {
         </div>
       )}
 
-      {/* 5. Respaldo: la aprobación quedó guardada en la BD, pero EmailJS no pudo notificar.
+      {/* 5. Modal detalle de Obra Pendiente */}
+      {isObraModalOpen && obraSeleccionada && (() => {
+        const imgUrl = obraSeleccionada.multimedia && obraSeleccionada.multimedia[0] ? obraSeleccionada.multimedia[0].url_archivo : null
+        const autorNombre = obraSeleccionada.cultor ? `${obraSeleccionada.cultor.primer_nombre} ${obraSeleccionada.cultor.primer_apellido}` : '—'
+        return (
+          <div className="modal-overlay-backdrop">
+            <div className="modal-box-card dossier-modal">
+              <div className="modal-box-header">
+                <h2>Revisión de Obra</h2>
+                <button onClick={() => { setIsObraModalOpen(false); setObraSeleccionada(null) }} className="close-x-btn" aria-label="Cerrar"><X size={18} /></button>
+              </div>
+              <div className="modal-box-body">
+                {imgUrl && (
+                  <img src={imgUrl} alt={obraSeleccionada.titulo} style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '12px', marginBottom: '16px' }} />
+                )}
+                <div className="dossier-grid">
+                  <div className="dossier-field"><span className="dossier-label">Título:</span><span className="dossier-value" style={{ textTransform: 'capitalize' }}>{obraSeleccionada.titulo || '—'}</span></div>
+                  <div className="dossier-field"><span className="dossier-label">Código:</span><span className="dossier-value">{obraSeleccionada.codigo_qr_link || '—'}</span></div>
+                  <div className="dossier-field"><span className="dossier-label">Autor:</span><span className="dossier-value">{autorNombre}</span></div>
+                  <div className="dossier-field"><span className="dossier-label">Tipo de Patrimonio:</span><span className="dossier-value">{obraSeleccionada.tipo_patrimonio || '—'}</span></div>
+                  <div className="dossier-field"><span className="dossier-label">Técnica:</span><span className="dossier-value">{obraSeleccionada.tecnica_utilizada || '—'}</span></div>
+                  <div className="dossier-field"><span className="dossier-label">Materiales:</span><span className="dossier-value">{obraSeleccionada.materiales_utilizados || '—'}</span></div>
+                  <div className="dossier-field"><span className="dossier-label">Año:</span><span className="dossier-value">{obraSeleccionada.anio_creacion || '—'}</span></div>
+                  <div className="dossier-field"><span className="dossier-label">Fecha de Postulación:</span><span className="dossier-value">{obraSeleccionada.fecha_postulacion ? new Date(obraSeleccionada.fecha_postulacion).toLocaleDateString() : '—'}</span></div>
+                </div>
+                {obraSeleccionada.descripcion && (
+                  <div className="dossier-field" style={{ marginTop: '12px' }}><span className="dossier-label">Descripción:</span><p className="dossier-value">{obraSeleccionada.descripcion}</p></div>
+                )}
+                {obraSeleccionada.significado_cultural && (
+                  <div className="dossier-field" style={{ marginTop: '12px' }}><span className="dossier-label">Significado Cultural:</span><p className="dossier-value">{obraSeleccionada.significado_cultural}</p></div>
+                )}
+                <div className="administrative-review-panel">
+                  <div className="review-banner-alert warning">
+                    <div className="review-banner-text">
+                      <strong>Revisión Administrativa</strong>
+                      <p>Verifique los datos de la obra antes de incorporarla al inventario oficial.</p>
+                    </div>
+                    <div className="review-actions-row">
+                      <button type="button" className="btn-reject" disabled={procesandoId === obraSeleccionada.id_obra} onClick={() => handleRechazarObra(obraSeleccionada.id_obra)}>Rechazar</button>
+                      <button type="button" className="btn-approve" disabled={procesandoId === obraSeleccionada.id_obra} onClick={() => handleAprobarObra(obraSeleccionada.id_obra)}>Aprobar Obra</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-box-footer">
+                <button type="button" className="btn-secondary" onClick={() => { setIsObraModalOpen(false); setObraSeleccionada(null) }}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* 6. Respaldo: la aprobación quedó guardada en la BD, pero EmailJS no pudo notificar.
           Modal bloqueante para asegurar que el admin vea y copie la contraseña antes de cerrar. */}
       {credencialesSinNotificar && (
         <div className="modal-overlay-backdrop">

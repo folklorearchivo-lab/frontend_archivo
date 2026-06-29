@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Eye,
   EyeOff,
@@ -6,7 +6,7 @@ import {
   Landmark
 } from 'lucide-react'
 import './Login.css'
-import { loginRequest } from '../../services/api'
+import { loginRequest, getConfiguracionWebRequest } from '../../services/api'
 
 const Login = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('usuario@archivo.gob')
@@ -15,6 +15,15 @@ const Login = ({ onLoginSuccess }) => {
   const [rememberMe, setRememberMe] = useState(true)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [configWeb, setConfigWeb] = useState(null)
+
+  useEffect(() => {
+    getConfiguracionWebRequest()
+      .then(data => {
+        if (data) setConfigWeb(data)
+      })
+      .catch(err => console.error('Error al cargar config de login:', err))
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -33,19 +42,22 @@ const Login = ({ onLoginSuccess }) => {
   return (
     <div className="login-page-container">
       {/* Left Branding Panel */}
-      <div className="login-brand-panel">
-        <span className="brand-top-label">Ministerio de Cultura</span>
+      <div 
+        className="login-brand-panel"
+        style={configWeb?.login_imagen ? { backgroundImage: `url(${configWeb.login_imagen})` } : {}}
+      >
+        <span className="brand-top-label">{configWeb?.login_top_label || 'Ministerio de Cultura'}</span>
 
         <div className="brand-center-content">
           <div className="landmark-icon-container">
             <Landmark size={28} />
           </div>
-          <h1 className="brand-title">Archivo Regional de Folklore</h1>
-          <p className="brand-subtitle">Patrimonio Cultural Luis Felipe Ramón y Rivera</p>
+          <h1 className="brand-title">{configWeb?.login_titulo || 'Archivo Regional de Folklore'}</h1>
+          <p className="brand-subtitle">{configWeb?.login_subtitulo || 'Patrimonio Cultural Luis Felipe Ramón y Rivera'}</p>
           <div className="brand-underline"></div>
         </div>
 
-        <p className="brand-bottom-label">Sistema de Gestión y Control Patrimonial</p>
+        <p className="brand-bottom-label">{configWeb?.login_bottom_label || 'Sistema de Gestión y Control Patrimonial'}</p>
       </div>
 
       {/* Right Login Panel */}

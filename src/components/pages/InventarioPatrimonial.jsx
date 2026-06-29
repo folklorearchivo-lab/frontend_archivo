@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Search,
   Plus,
@@ -20,76 +20,65 @@ import {
 } from 'lucide-react'
 import partituraImg from '../../assets/featured_partitura.png'
 import './InventarioPatrimonial.css'
+import { 
+  getObrasAdminRequest,
+  createObraRequest,
+  updateObraRequest,
+  deleteObraRequest,
+  getCultoresAprobadosRequest,
+  getCategoriasRequest,
+  createCategoriaRequest,
+  uploadMultimediaRequest
+} from '../../services/api'
 
 const InventarioPatrimonial = () => {
-  // Mock data of initial inventory pieces
-  const [inventario, setInventario] = useState([
-    {
-      id: 1,
-      name: 'Partitura Original: Tonada de San Sebastián',
-      code: 'IP-001',
-      author: 'Juan R. Castañeda',
-      category: 'Artesanía',
-      materials: 'Papel / Tinta Ferrogálica',
-      conservation: 'Excelente',
-      location: 'Sala 1',
-      image: partituraImg,
-      linkedFiles: [101] // linked to PDF
-    },
-    {
-      id: 2,
-      name: 'Cuatro de Cedro Tallado',
-      code: 'IP-002',
-      author: 'Eleazar Rojas',
-      category: 'Instrumentos',
-      materials: 'Madera de Cedro / Cuerdas de Nylon',
-      conservation: 'Excelente',
-      location: 'Depósito A',
-      image: null,
-      linkedFiles: [102] // linked to Audio
-    },
-    {
-      id: 3,
-      name: 'Traje de Danza de Sanjuanero',
-      code: 'IP-003',
-      author: 'Isabel de Rivera',
-      category: 'Vestimenta',
-      materials: 'Lino / Encaje de Bolillos',
-      conservation: 'Deteriorado',
-      location: 'Depósito B',
-      image: null,
-      linkedFiles: []
-    },
-    {
-      id: 4,
-      name: 'Vasija de Barro Cocido',
-      code: 'IP-004',
-      author: 'María Sosa',
-      category: 'Artesanía',
-      materials: 'Arcilla roja / Engobes minerales',
-      conservation: 'Restauración',
-      location: 'Sala 2',
-      image: null,
-      linkedFiles: []
-    }
-  ])
+  const token = localStorage.getItem('auth-token')
+  
+  const [inventario, setInventario] = useState([])
+  const [categoriesList, setCategoriesList] = useState([])
+  const [cultoresList, setCultoresList] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  // Dynamic Options State
-  const [categoriesList, setCategoriesList] = useState([
-    'Artesanía',
-    'Instrumentos',
-    'Vestimenta'
-  ])
   const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [customCategory, setCustomCategory] = useState('')
 
   const [isStandaloneCategoryModalOpen, setIsStandaloneCategoryModalOpen] = useState(false)
   const [standaloneCategoryName, setStandaloneCategoryName] = useState('')
 
-  const handleAddCategory = () => {
-    if (customCategory.trim() && !categoriesList.includes(customCategory.trim())) {
-      setCategoriesList([...categoriesList, customCategory.trim()])
-      setNewPieceCategory(customCategory.trim())
+  useEffect(() => {
+    cargarDatos()
+  }, [])
+
+  const cargarDatos = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const [obras, cultores, categorias] = await Promise.all([
+        getObrasAdminRequest(token).catch(() => []),
+        getCultoresAprobadosRequest(token).catch(() => []),
+        getCategoriasRequest().catch(() => [])
+      ])
+      setInventario(obras)
+      setCultoresList(cultores)
+      setCategoriesList(categorias)
+    } catch (err) {
+      console.error('Error al cargar datos de inventario:', err)
+      setError('Error al conectar con la base de datos')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAddCategory = async () => {
+    if (customCategory.trim()) {
+      try {
+        const nuevaCat = await createCategoriaRequest(customCategory.trim(), token)
+        setCategoriesList(prev => [...prev, nuevaCat])
+        setNewPieceCategory(nuevaCat.id_categoria)
+      } catch (err) {
+        alert('Error al añadir la categoría')
+      }
     }
     setCustomCategory('')
     setIsAddingCategory(false)
@@ -112,11 +101,12 @@ const InventarioPatrimonial = () => {
   const [newPieceName, setNewPieceName] = useState('')
   const [newPieceCode, setNewPieceCode] = useState('')
   const [newPieceAuthor, setNewPieceAuthor] = useState('')
-  const [newPieceCategory, setNewPieceCategory] = useState('Artesanía')
+  const [newPieceCategory, setNewPieceCategory] = useState('')
   const [newPieceMaterials, setNewPieceMaterials] = useState('')
   const [newPieceConservation, setNewPieceConservation] = useState('Excelente')
   const [newPieceLocation, setNewPieceLocation] = useState('Sala 1')
-  const [newPieceImage, setNewPieceImage] = useState(null) // Base64 dataURL
+  const [newPieceImage, setNewPieceImage] = useState(null)
+  const [newPieceImageFile, setNewPieceImageFile] = useState(null)
   const [formError, setFormError] = useState('')
 
   // View Dossier (Expediente Técnico) Modal State
@@ -135,15 +125,16 @@ const InventarioPatrimonial = () => {
   ])
 
   // Filters logic
-  const filteredPieces = inventario.filter(piece => {
+  const filteredPieces = (inventario || []).filter(piece => {
     const matchesSearch = 
-      piece.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      piece.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      piece.author.toLowerCase().includes(searchQuery.toLowerCase())
+      (piece.titulo || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (piece.codigo_qr_link || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (piece.cultor?.nombre || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (piece.cultor?.apellido || '').toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesCategory = selectedCategory === 'all' || piece.category === selectedCategory
-    const matchesConservation = selectedConservation === 'all' || piece.conservation === selectedConservation
-    const matchesLocation = selectedLocation === 'all' || piece.location.startsWith(selectedLocation)
+    const matchesCategory = selectedCategory === 'all' || String(piece.id_categoria) === String(selectedCategory)
+    const matchesConservation = selectedConservation === 'all' || piece.estado_conservacion === selectedConservation
+    const matchesLocation = selectedLocation === 'all' || (piece.ubicacion_actual || '').startsWith(selectedLocation)
 
     return matchesSearch && matchesCategory && matchesConservation && matchesLocation
   })
@@ -154,12 +145,13 @@ const InventarioPatrimonial = () => {
     setEditingPieceId(null)
     setNewPieceName('')
     setNewPieceCode('')
-    setNewPieceAuthor('')
-    setNewPieceCategory('Artesanía')
+    setNewPieceAuthor(cultoresList[0]?.id_cultor || '')
+    setNewPieceCategory(categoriesList[0]?.id_categoria || '')
     setNewPieceMaterials('')
     setNewPieceConservation('Excelente')
     setNewPieceLocation('Sala 1')
     setNewPieceImage(null)
+    setNewPieceImageFile(null)
     setFormError('')
     setIsModalOpen(true)
   }
@@ -167,20 +159,21 @@ const InventarioPatrimonial = () => {
   // Open Edit Modal Handler
   const handleOpenEditModal = (piece) => {
     setModalMode('edit')
-    setEditingPieceId(piece.id)
-    setNewPieceName(piece.name)
-    setNewPieceCode(piece.code)
-    setNewPieceAuthor(piece.author)
-    setNewPieceCategory(piece.category)
-    setNewPieceMaterials(piece.materials === 'No especificados' ? '' : piece.materials)
-    setNewPieceConservation(piece.conservation)
-    setNewPieceLocation(piece.location)
-    setNewPieceImage(piece.image)
+    setEditingPieceId(piece.id_obra)
+    setNewPieceName(piece.titulo || '')
+    setNewPieceCode(piece.codigo_qr_link || '')
+    setNewPieceAuthor(piece.id_cultor || '')
+    setNewPieceCategory(piece.id_categoria || '')
+    setNewPieceMaterials(piece.materiales_utilizados === 'No especificados' ? '' : (piece.materiales_utilizados || ''))
+    setNewPieceConservation(piece.estado_conservacion || 'Excelente')
+    setNewPieceLocation(piece.ubicacion_actual || 'Sala 1')
+    setNewPieceImage(piece.multimedia && piece.multimedia[0] ? piece.multimedia[0].url_archivo : null)
+    setNewPieceImageFile(null)
     setFormError('')
     setIsModalOpen(true)
   }
 
-  // Handle Base64 Image upload via FileReader
+  // Handle Image upload selection
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0]
@@ -188,90 +181,84 @@ const InventarioPatrimonial = () => {
         setFormError('Por favor selecciona un archivo de imagen válido.')
         return
       }
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setNewPieceImage(reader.result)
-      }
-      reader.readAsDataURL(file)
+      setNewPieceImageFile(file)
+      setNewPieceImage(URL.createObjectURL(file))
     }
   }
 
   // Submit Handler for Form (Create/Edit)
-  const handleRegisterPiece = (e) => {
+  const handleRegisterPiece = async (e) => {
     e.preventDefault()
 
-    if (!newPieceName.trim() || !newPieceCode.trim() || !newPieceAuthor.trim()) {
-      setFormError('Por favor completa los campos obligatorios: Obra, Código y Autor.')
+    if (!newPieceName.trim() || !newPieceAuthor) {
+      setFormError('Por favor completa los campos obligatorios: Obra y Autor.')
       return
     }
 
-    // Basic Code validation format IP-XXX
-    const codeRegex = /^IP-\d{3,4}$/i
-    if (!codeRegex.test(newPieceCode.trim())) {
-      setFormError('Formato de código inválido. Debe ser IP-XXX (Ej: IP-005)')
-      return
+    const selectedCultor = cultoresList.find(c => String(c.id_cultor) === String(newPieceAuthor))
+
+    const payload = {
+      titulo: newPieceName.trim(),
+      id_cultor: newPieceAuthor ? parseInt(newPieceAuthor, 10) : null,
+      id_categoria: newPieceCategory ? parseInt(newPieceCategory, 10) : null,
+      id_parroquia: selectedCultor ? selectedCultor.id_parroquia : null,
+      tipo_patrimonio: 'Material Mueble',
+      materiales_utilizados: newPieceMaterials.trim() || 'No especificados',
+      estado_conservacion: newPieceConservation,
+      ubicacion_actual: newPieceLocation
     }
 
-    // Duplicate code check (ignoring current editing piece)
-    const isDuplicate = inventario.some(p => 
-      p.code.toUpperCase() === newPieceCode.trim().toUpperCase() && 
-      p.id !== editingPieceId
-    )
-    if (isDuplicate) {
-      setFormError('El código de inventario ya se encuentra registrado.')
-      return
+    if (modalMode === 'edit') {
+      payload.codigo_qr_link = newPieceCode.trim().toUpperCase()
     }
 
-    if (modalMode === 'create') {
-      const newPiece = {
-        id: Date.now(),
-        name: newPieceName.trim(),
-        code: newPieceCode.trim().toUpperCase(),
-        author: newPieceAuthor.trim(),
-        category: newPieceCategory,
-        materials: newPieceMaterials.trim() || 'No especificados',
-        conservation: newPieceConservation,
-        location: newPieceLocation,
-        image: newPieceImage,
-        linkedFiles: []
+    try {
+      let savedObra
+      if (modalMode === 'create') {
+        savedObra = await createObraRequest(payload, token)
+      } else {
+        savedObra = await updateObraRequest(editingPieceId, payload, token)
       }
-      setInventario([...inventario, newPiece])
-    } else {
-      setInventario(prev => prev.map(p => 
-        p.id === editingPieceId 
-          ? { 
-              ...p, 
-              name: newPieceName.trim(), 
-              code: newPieceCode.trim().toUpperCase(), 
-              author: newPieceAuthor.trim(), 
-              category: newPieceCategory, 
-              materials: newPieceMaterials.trim() || 'No especificados', 
-              conservation: newPieceConservation, 
-              location: newPieceLocation, 
-              image: newPieceImage 
-            } 
-          : p
-      ))
+
+      // Si hay archivo de imagen seleccionado, subirlo
+      if (newPieceImageFile) {
+        const formData = new FormData()
+        formData.append('archivo', newPieceImageFile)
+        formData.append('id_obra', savedObra.id_obra)
+        formData.append('tipo_archivo', 'imagen')
+        formData.append('es_portada', 'si')
+        await uploadMultimediaRequest(formData, token)
+      }
+
+      await cargarDatos()
+
+      // Reset and close
+      setNewPieceName('')
+      setNewPieceCode('')
+      setNewPieceAuthor(cultoresList[0]?.id_cultor || '')
+      setNewPieceCategory(categoriesList[0]?.id_categoria || '')
+      setNewPieceMaterials('')
+      setNewPieceConservation('Excelente')
+      setNewPieceLocation('Sala 1')
+      setNewPieceImage(null)
+      setNewPieceImageFile(null)
+      setEditingPieceId(null)
+      setFormError('')
+      setIsModalOpen(false)
+    } catch (err) {
+      setFormError(err.message || 'Error al guardar la obra.')
     }
-    
-    // Reset and close
-    setNewPieceName('')
-    setNewPieceCode('')
-    setNewPieceAuthor('')
-    setNewPieceCategory('Artesanía')
-    setNewPieceMaterials('')
-    setNewPieceConservation('Excelente')
-    setNewPieceLocation('Sala 1')
-    setNewPieceImage(null)
-    setEditingPieceId(null)
-    setFormError('')
-    setIsModalOpen(false)
   }
 
-  // Delete Piece Handler
-  const handleDeletePiece = (id) => {
+  // Delete Piece Handler (Logical Delete)
+  const handleDeletePiece = async (id) => {
     if (window.confirm('¿Está seguro de que desea eliminar este registro del inventario?')) {
-      setInventario(inventario.filter(p => p.id !== id))
+      try {
+        await deleteObraRequest(id, token)
+        await cargarDatos()
+      } catch (err) {
+        alert('Error al eliminar la obra: ' + err.message)
+      }
     }
   }
 
@@ -441,7 +428,7 @@ const InventarioPatrimonial = () => {
             className="filter-dropdown-select"
           >
             <option value="all">Categoría de Manifestación</option>
-            {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
+            {categoriesList.map(c => <option key={c.id_categoria} value={c.id_categoria}>{c.nombre}</option>)}
           </select>
 
           <select 
@@ -490,104 +477,109 @@ const InventarioPatrimonial = () => {
             </thead>
             <tbody>
               {filteredPieces.length > 0 ? (
-                filteredPieces.map((piece) => (
-                  <tr key={piece.id}>
-                    {/* Pieza Obra (Thumbnail + Name) */}
-                    <td>
-                      <div 
-                        className="piece-profile-cell"
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => {
-                          setSelectedPieceForView(piece)
-                          setIsViewModalOpen(true)
-                        }}
-                        title="Ver ficha técnica"
-                      >
-                        {piece.image ? (
-                          <img src={piece.image} alt={piece.name} className="piece-thumbnail" />
-                        ) : (
-                          <div className="piece-thumbnail-placeholder">
-                            <Camera size={18} />
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span className="piece-display-name">{piece.name}</span>
-                          <span className="piece-code-info">{piece.code}</span>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Autor */}
-                    <td>
-                      <span className="author-cell-text">{piece.author}</span>
-                    </td>
-
-                    {/* Materiales */}
-                    <td>
-                      <span className="materials-text">{piece.materials}</span>
-                    </td>
-
-                    {/* Conservación */}
-                    <td>
-                      <span className={`cons-badge ${piece.conservation.toLowerCase()}`}>
-                        <span className="cons-badge-dot"></span>
-                        {piece.conservation}
-                      </span>
-                    </td>
-
-                    {/* Ubicación */}
-                    <td>
-                      <span className="location-text">{piece.location}</span>
-                    </td>
-
-                    {/* QR Code Icon with Hover popup */}
-                    <td>
-                      <div className="qr-code-cell">
-                        <QrCode size={18} />
-                        <div className="qr-tooltip">
-                          ID Pieza: {piece.code}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Acciones */}
-                    <td className="text-right">
-                      <div className="grid-actions-row">
-                        <button 
-                          className="grid-action-btn" 
-                          title="Ver Expediente Técnico"
+                filteredPieces.map((piece) => {
+                  const coverImage = piece.multimedia && piece.multimedia[0] ? piece.multimedia[0].url_archivo : null;
+                  return (
+                    <tr key={piece.id_obra}>
+                      {/* Pieza Obra (Thumbnail + Name) */}
+                      <td>
+                        <div 
+                          className="piece-profile-cell"
+                          style={{ cursor: 'pointer' }}
                           onClick={() => {
                             setSelectedPieceForView(piece)
                             setIsViewModalOpen(true)
                           }}
+                          title="Ver ficha técnica"
                         >
-                          <FolderOpen size={16} />
-                        </button>
-                        <button 
-                          className="grid-action-btn" 
-                          title="Editar Ficha"
-                          onClick={() => handleOpenEditModal(piece)}
-                        >
-                          <Edit2 size={15} />
-                        </button>
-                        <button 
-                          className="grid-action-btn" 
-                          title="Vincular Multimedia"
-                          onClick={() => handleOpenLinkModal(piece)}
-                        >
-                          <Paperclip size={15} />
-                        </button>
-                        <button 
-                          className="grid-action-btn delete-btn" 
-                          title="Eliminar Registro"
-                          onClick={() => handleDeletePiece(piece.id)}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          {coverImage ? (
+                            <img src={coverImage} alt={piece.titulo} className="piece-thumbnail" />
+                          ) : (
+                            <div className="piece-thumbnail-placeholder">
+                              <Camera size={18} />
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span className="piece-display-name">{piece.titulo}</span>
+                            <span className="piece-code-info">{piece.codigo_qr_link}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Autor */}
+                      <td>
+                        <span className="author-cell-text">
+                          {piece.cultor ? `${piece.cultor.primer_nombre} ${piece.cultor.primer_apellido}` : 'No asignado'}
+                        </span>
+                      </td>
+
+                      {/* Materiales */}
+                      <td>
+                        <span className="materials-text">{piece.materiales_utilizados || 'No especificados'}</span>
+                      </td>
+
+                      {/* Conservación */}
+                      <td>
+                        <span className={`cons-badge ${(piece.estado_conservacion || '').toLowerCase()}`}>
+                          <span className="cons-badge-dot"></span>
+                          {piece.estado_conservacion || 'Excelente'}
+                        </span>
+                      </td>
+
+                      {/* Ubicación */}
+                      <td>
+                        <span className="location-text">{piece.ubicacion_actual || 'Sala 1'}</span>
+                      </td>
+
+                      {/* QR Code Icon with Hover popup */}
+                      <td>
+                        <div className="qr-code-cell">
+                          <QrCode size={18} />
+                          <div className="qr-tooltip">
+                            ID Pieza: {piece.codigo_qr_link}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Acciones */}
+                      <td className="text-right">
+                        <div className="grid-actions-row">
+                          <button 
+                            className="grid-action-btn" 
+                            title="Ver Expediente Técnico"
+                            onClick={() => {
+                              setSelectedPieceForView(piece)
+                              setIsViewModalOpen(true)
+                            }}
+                          >
+                            <FolderOpen size={16} />
+                          </button>
+                          <button 
+                            className="grid-action-btn" 
+                            title="Editar Ficha"
+                            onClick={() => handleOpenEditModal(piece)}
+                          >
+                            <Edit2 size={15} />
+                          </button>
+                          <button 
+                            className="grid-action-btn" 
+                            title="Vincular Multimedia"
+                            onClick={() => handleOpenLinkModal(piece)}
+                          >
+                            <Paperclip size={15} />
+                          </button>
+                          <button 
+                            className="grid-action-btn delete-btn" 
+                            title="Eliminar Registro"
+                            onClick={() => handleDeletePiece(piece.id_obra)}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="7">
@@ -736,7 +728,6 @@ const InventarioPatrimonial = () => {
                 <div className="input-box-field">
                   <label htmlFor="modal-piece-name">Nombre de la Obra / Pieza <span className="req-star">*</span></label>
                   <div className="icon-input-container">
-                    <Camera size={15} className="field-icon-left" />
                     <input 
                       type="text" 
                       id="modal-piece-name" 
@@ -751,16 +742,15 @@ const InventarioPatrimonial = () => {
                 {/* Code and Author Row */}
                 <div className="fields-split-row">
                   <div className="input-box-field">
-                    <label htmlFor="modal-piece-code">Código Inventario <span className="req-star">*</span></label>
+                    <label htmlFor="modal-piece-code">Código Inventario</label>
                     <div className="icon-input-container">
-                      <QrCode size={15} className="field-icon-left" />
                       <input 
                         type="text" 
                         id="modal-piece-code" 
-                        placeholder="Formato: IP-XXX (Ej: IP-005)"
-                        value={newPieceCode}
-                        onChange={(e) => setNewPieceCode(e.target.value)}
-                        required
+                        placeholder="Generación Automática"
+                        value={modalMode === 'create' ? 'Generación Automática' : newPieceCode}
+                        disabled
+                        style={{ backgroundColor: '#f5f4f0', cursor: 'not-allowed' }}
                       />
                     </div>
                   </div>
@@ -768,19 +758,23 @@ const InventarioPatrimonial = () => {
                   <div className="input-box-field">
                     <label htmlFor="modal-piece-author">Cultor / Autor <span className="req-star">*</span></label>
                     <div className="icon-input-container">
-                      <User size={15} className="field-icon-left" />
-                      <input 
-                        type="text" 
+                      <select 
                         id="modal-piece-author" 
-                        placeholder="Ej. Eleazar Rojas"
                         value={newPieceAuthor}
                         onChange={(e) => setNewPieceAuthor(e.target.value)}
                         required
-                      />
+                        style={{ flex: 1 }}
+                      >
+                        <option value="">Seleccione un cultor</option>
+                        {cultoresList.map(c => (
+                          <option key={c.id_cultor} value={c.id_cultor}>
+                            {c.primer_nombre} {c.primer_apellido}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
-
                 {/* Category and Location Row */}
                 <div className="fields-split-row">
                   <div className="input-box-field">
@@ -792,7 +786,8 @@ const InventarioPatrimonial = () => {
                         onChange={(e) => setNewPieceCategory(e.target.value)}
                         style={{ flex: 1 }}
                       >
-                        {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
+                        <option value="">Seleccione una categoría</option>
+                        {categoriesList.map(c => <option key={c.id_categoria} value={c.id_categoria}>{c.nombre}</option>)}
                       </select>
                     </div>
                   </div>
@@ -804,6 +799,7 @@ const InventarioPatrimonial = () => {
                         id="modal-piece-location"
                         value={newPieceLocation}
                         onChange={(e) => setNewPieceLocation(e.target.value)}
+                        style={{ flex: 1 }}
                       >
                         <option value="Sala 1">Sala 1</option>
                         <option value="Sala 2">Sala 2</option>
@@ -823,6 +819,7 @@ const InventarioPatrimonial = () => {
                         id="modal-piece-conservation"
                         value={newPieceConservation}
                         onChange={(e) => setNewPieceConservation(e.target.value)}
+                        style={{ flex: 1 }}
                       >
                         <option value="Excelente">Excelente</option>
                         <option value="Deteriorado">Deteriorado</option>
@@ -928,9 +925,14 @@ const InventarioPatrimonial = () => {
               <button 
                 type="button" 
                 className="btn-terracota" 
-                onClick={() => {
-                  if (standaloneCategoryName.trim() && !categoriesList.includes(standaloneCategoryName.trim())) {
-                    setCategoriesList([...categoriesList, standaloneCategoryName.trim()]);
+                onClick={async () => {
+                  if (standaloneCategoryName.trim()) {
+                    try {
+                      const nuevaCat = await createCategoriaRequest(standaloneCategoryName.trim(), token);
+                      setCategoriesList([...categoriesList, nuevaCat]);
+                    } catch (err) {
+                      alert('Error al crear categoría: ' + err.message);
+                    }
                   }
                   setStandaloneCategoryName('');
                   setIsStandaloneCategoryModalOpen(false);
@@ -966,8 +968,8 @@ const InventarioPatrimonial = () => {
             <div className="modal-box-body">
               {/* Image Banner */}
               <div className="dossier-image-banner">
-                {selectedPieceForView.image ? (
-                  <img src={selectedPieceForView.image} alt={selectedPieceForView.name} className="dossier-featured-img" />
+                {selectedPieceForView.multimedia && selectedPieceForView.multimedia[0] ? (
+                  <img src={selectedPieceForView.multimedia[0].url_archivo} alt={selectedPieceForView.titulo} className="dossier-featured-img" />
                 ) : (
                   <div className="dossier-no-image">
                     <Camera size={32} />
@@ -979,13 +981,13 @@ const InventarioPatrimonial = () => {
               {/* Title & Metadata */}
               <div className="dossier-profile-header" style={{ borderBottom: 'none', paddingBottom: '0' }}>
                 <div className="dossier-profile-meta">
-                  <h3 style={{ fontSize: '15px' }}>{selectedPieceForView.name}</h3>
-                  <span className="dossier-sub">Código Inventario: <strong>{selectedPieceForView.code}</strong></span>
+                  <h3 style={{ fontSize: '15px' }}>{selectedPieceForView.titulo}</h3>
+                  <span className="dossier-sub">Código Inventario: <strong>{selectedPieceForView.codigo_qr_link}</strong></span>
                 </div>
                 <div>
-                  <span className={`cons-badge ${selectedPieceForView.conservation.toLowerCase()}`}>
+                  <span className={`cons-badge ${(selectedPieceForView.estado_conservacion || '').toLowerCase()}`}>
                     <span className="cons-badge-dot"></span>
-                    {selectedPieceForView.conservation}
+                    {selectedPieceForView.estado_conservacion || 'Excelente'}
                   </span>
                 </div>
               </div>
@@ -994,19 +996,23 @@ const InventarioPatrimonial = () => {
               <div className="dossier-grid">
                 <div className="dossier-field">
                   <span className="dossier-label">Autor / Cultor Asociado:</span>
-                  <span className="dossier-value">{selectedPieceForView.author}</span>
+                  <span className="dossier-value">
+                    {selectedPieceForView.cultor ? `${selectedPieceForView.cultor.primer_nombre} ${selectedPieceForView.cultor.primer_apellido}` : 'No asignado'}
+                  </span>
                 </div>
                 <div className="dossier-field">
                   <span className="dossier-label">Categoría de Manifestación:</span>
-                  <span className="dossier-value">{selectedPieceForView.category}</span>
+                  <span className="dossier-value">
+                    {selectedPieceForView.categoria ? selectedPieceForView.categoria.nombre : 'No asignada'}
+                  </span>
                 </div>
                 <div className="dossier-field">
                   <span className="dossier-label">Materiales / Elementos:</span>
-                  <span className="dossier-value">{selectedPieceForView.materials}</span>
+                  <span className="dossier-value">{selectedPieceForView.materiales_utilizados || 'No especificados'}</span>
                 </div>
                 <div className="dossier-field">
                   <span className="dossier-label">Ubicación Física:</span>
-                  <span className="dossier-value">{selectedPieceForView.location}</span>
+                  <span className="dossier-value">{selectedPieceForView.ubicacion_actual || 'Sala 1'}</span>
                 </div>
               </div>
 

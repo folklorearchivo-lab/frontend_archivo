@@ -12,8 +12,9 @@ import {
   ChevronRight,
   LogOut,
   Menu,
-  X,
-  Lock
+  Lock as LockIcon,
+  Settings,
+  X
 } from 'lucide-react'
 import './Layout.css'
 import adminAvatar from '../assets/admin_avatar.png'
@@ -103,10 +104,10 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
           <button
             onClick={() => handleViewChange('preregistro')}
             className={`nav-item nav-btn ${currentView === 'preregistro' ? 'active' : ''}`}
-            data-label="Pre-registro"
+            data-label="Solicitudes de Registro"
           >
             <FileText className="nav-icon" size={20} />
-            <span>Pre-registro</span>
+            <span>Solicitudes de Registro</span>
           </button>
           <button
             onClick={() => handleViewChange('cultores')}
@@ -127,10 +128,10 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
           <button
             onClick={() => handleViewChange('difusion')}
             className={`nav-item nav-btn ${currentView === 'difusion' ? 'active' : ''}`}
-            data-label="Difusión y Galería"
+            data-label="Configuración del Portal"
           >
-            <ImageIcon className="nav-icon" size={20} />
-            <span>Difusión y Galería</span>
+            <Settings className="nav-icon" size={20} />
+            <span>Configuración del Portal</span>
           </button>
 
           <span className="nav-section-label">Manejo Administrativo</span>
@@ -170,7 +171,7 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
             title="Cambiar contraseña"
             data-label="Cambiar contraseña"
           >
-            <Lock size={16} />
+            <LockIcon size={16} />
             <span>Cambiar Contraseña</span>
           </button>
           <button

@@ -5,7 +5,7 @@ import UsersManagement from './components/pages/UsersManagement'
 import CultoresDirectory from './components/pages/CultoresDirectory'
 import PreRegistration from './components/pages/PreRegistration'
 import InventarioPatrimonial from './components/pages/InventarioPatrimonial'
-import DifusionGaleria from './components/pages/DifusionGaleria'
+import ConfiguracionPortal from './components/pages/ConfiguracionPortal'
 import ReportesCatalogo from './components/pages/ReportesCatalogo'
 import Login from './components/pages/Login'
 import ForgotPassword from './components/pages/ForgotPassword'
@@ -63,7 +63,7 @@ function App() {
         <InventarioPatrimonial />
       )}
       {currentView === 'difusion' && (
-        <DifusionGaleria />
+        <ConfiguracionPortal />
       )}
       {currentView === 'reportes' && (
         <ReportesCatalogo />

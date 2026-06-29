@@ -201,6 +201,34 @@ export async function getParroquiasRequest() {
   }
 }
 
+// Obtener todas las categorías de obras
+export async function getCategoriasRequest() {
+  try {
+    const response = await axios.get(`${API_URL}/categorias_obra`)
+    return response.data
+  } catch (error) {
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al obtener las categorías'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// Crear una nueva categoría de obra (Administrativo)
+export async function createCategoriaRequest(nombre_categoria, token) {
+  exigirToken(token)
+  try {
+    const response = await axios.post(`${API_URL}/categorias_obra`, { nombre_categoria }, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al crear la categoría'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
 // Lista de parroquias filtradas por municipio
 export async function getParroquiasByMunicipioRequest(idMunicipio) {
   try {
@@ -258,10 +286,11 @@ export async function actualizarEstatusCultorRequest(idCultor, estatus, token) {
 // ==========================================
 
 // Obtener todas las obras del inventario (Administrativo)
-export async function getObrasAdminRequest(token) {
+export async function getObrasAdminRequest(token, estatus = null) {
   exigirToken(token)
   try {
-    const response = await axios.get(`${API_URL}/obras`, {
+    const url = estatus ? `${API_URL}/obras?estatus=${estatus}` : `${API_URL}/obras`
+    const response = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` }
     })
     return response.data
@@ -270,6 +299,23 @@ export async function getObrasAdminRequest(token) {
       throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
     }
     const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al obtener el inventario de obras'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// Actualizar estatus de una obra (aprobar/rechazar) (Administrativo)
+export async function updateObraEstatusRequest(idObra, estatus, token) {
+  exigirToken(token)
+  try {
+    const response = await axios.patch(`${API_URL}/obras/${idObra}/estatus`, { estatus }, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al actualizar estatus de la obra'
     throw new Error(errorMsg, { cause: error })
   }
 }
@@ -293,6 +339,61 @@ export async function updateObraDestacadoRequest(idObra, destacado, token) {
   }
 }
 
+// Crear una obra nueva (Administrativo)
+export async function createObraRequest(data, token) {
+  exigirToken(token)
+  try {
+    const headers = { Authorization: `Bearer ${token}` }
+    if (data instanceof FormData) {
+      headers['Content-Type'] = 'multipart/form-data'
+    }
+    const response = await axios.post(`${API_URL}/obras`, data, { headers })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al crear la obra'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// Actualizar una obra existente (Administrativo)
+export async function updateObraRequest(idObra, data, token) {
+  exigirToken(token)
+  try {
+    const headers = { Authorization: `Bearer ${token}` }
+    if (data instanceof FormData) {
+      headers['Content-Type'] = 'multipart/form-data'
+    }
+    const response = await axios.put(`${API_URL}/obras/${idObra}`, data, { headers })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al actualizar la obra'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// Eliminar una obra (Administrativo - Eliminación Lógica)
+export async function deleteObraRequest(idObra, token) {
+  exigirToken(token)
+  try {
+    const response = await axios.delete(`${API_URL}/obras/${idObra}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al eliminar la obra'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
 // ==========================================
 // CONFIGURACIÓN WEB
 // ==========================================
@@ -310,9 +411,11 @@ export async function getConfiguracionWebRequest() {
 export async function updateConfiguracionWebRequest(data, token) {
   exigirToken(token)
   try {
-    const response = await axios.put(`${API_URL}/configuracion-web`, data, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const headers = { Authorization: `Bearer ${token}` }
+    if (data instanceof FormData) {
+      headers['Content-Type'] = 'multipart/form-data'
+    }
+    const response = await axios.put(`${API_URL}/configuracion-web`, data, { headers })
     return response.data
   } catch (error) {
     if (error.response?.status === 401 || error.response?.status === 403) {
@@ -439,6 +542,26 @@ export async function unlinkObraExposicionRequest(id_exposicion, id_obra, token)
       throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
     }
     const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al desvincular obra'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// Subir un archivo multimedia (imagen/documento) de una obra
+export async function uploadMultimediaRequest(formData, token) {
+  exigirToken(token)
+  try {
+    const response = await axios.post(`${API_URL}/multimedia/upload`, formData, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al subir el archivo multimedia'
     throw new Error(errorMsg, { cause: error })
   }
 }

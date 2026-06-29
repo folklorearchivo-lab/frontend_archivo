@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import {
-  Edit2, Trash2, Plus, Monitor, Link as LinkIcon, Folder, FolderOpen, Eye, EyeOff, Camera, Layers, X
+  Edit2, Trash2, Plus, Monitor, Link as LinkIcon, Folder, FolderOpen, Eye, EyeOff, Camera, Layers, X, Lock as LockIcon
 } from 'lucide-react'
-import './DifusionGaleria.css'
+import './ConfiguracionPortal.css'
 import { 
   getConfiguracionWebRequest, 
   updateConfiguracionWebRequest,
@@ -19,7 +19,7 @@ import {
 import TextInput from '../form/TextInput'
 import Textarea from '../form/Textarea'
 
-const DifusionGaleria = () => {
+const ConfiguracionPortal = () => {
   const token = localStorage.getItem('auth-token')
   const [iframeKey, setIframeKey] = useState(Date.now())
 
@@ -29,9 +29,20 @@ const DifusionGaleria = () => {
     about_texto: '',
     contacto_email: '',
     contacto_telefono: '',
-    contacto_direccion: ''
+    contacto_direccion: '',
+    hero_imagen: '',
+    about_imagen: '',
+    login_titulo: '',
+    login_subtitulo: '',
+    login_top_label: '',
+    login_bottom_label: '',
+    login_imagen: ''
   })
+  const [heroFile, setHeroFile] = useState(null)
+  const [aboutFile, setAboutFile] = useState(null)
+  const [loginFile, setLoginFile] = useState(null)
   const [loadingConfig, setLoadingConfig] = useState(true)
+  const [isSavingConfig, setIsSavingConfig] = useState(false)
 
   const [exposiciones, setExposiciones] = useState([])
   const [loadingExposiciones, setLoadingExposiciones] = useState(true)
@@ -74,7 +85,14 @@ const DifusionGaleria = () => {
           about_texto: data.about_texto || '',
           contacto_email: data.contacto_email || '',
           contacto_telefono: data.contacto_telefono || '',
-          contacto_direccion: data.contacto_direccion || ''
+          contacto_direccion: data.contacto_direccion || '',
+          hero_imagen: data.hero_imagen || '',
+          about_imagen: data.about_imagen || '',
+          login_titulo: data.login_titulo || 'Inicio de Sesión',
+          login_subtitulo: data.login_subtitulo || 'Patrimonio Cultural Luis Felipe Ramón y Rivera',
+          login_top_label: data.login_top_label || 'Ministerio de Cultura',
+          login_bottom_label: data.login_bottom_label || 'Sistema de Gestión y Control Patrimonial',
+          login_imagen: data.login_imagen || ''
         })
       }
     } catch (error) {
@@ -111,11 +129,40 @@ const DifusionGaleria = () => {
   const handleSaveConfigWeb = async (e) => {
     e.preventDefault()
     try {
-      await updateConfiguracionWebRequest(configWeb, token)
+      setIsSavingConfig(true)
+      const formData = new FormData()
+      formData.append('hero_titulo', configWeb.hero_titulo)
+      formData.append('hero_subtitulo', configWeb.hero_subtitulo)
+      formData.append('about_texto', configWeb.about_texto)
+      formData.append('contacto_email', configWeb.contacto_email)
+      formData.append('contacto_telefono', configWeb.contacto_telefono)
+      formData.append('contacto_direccion', configWeb.contacto_direccion)
+      formData.append('login_titulo', configWeb.login_titulo)
+      formData.append('login_subtitulo', configWeb.login_subtitulo)
+      formData.append('login_top_label', configWeb.login_top_label)
+      formData.append('login_bottom_label', configWeb.login_bottom_label)
+      
+      if (heroFile) {
+        formData.append('hero_imagen', heroFile)
+      }
+      if (aboutFile) {
+        formData.append('about_imagen', aboutFile)
+      }
+      if (loginFile) {
+        formData.append('login_imagen', loginFile)
+      }
+
+      await updateConfiguracionWebRequest(formData, token)
       alert("¡Configuración Web actualizada con éxito!")
+      setHeroFile(null)
+      setAboutFile(null)
+      setLoginFile(null)
+      fetchConfigWeb()
       setIframeKey(Date.now())
     } catch (error) {
       alert("Error al guardar la configuración web: " + (error.response?.data?.message || error.response?.data?.error || error.message))
+    } finally {
+      setIsSavingConfig(false)
     }
   }
 
@@ -229,11 +276,11 @@ const DifusionGaleria = () => {
           <nav className="breadcrumbs">
             <span>ARCHIVO FOLKLORE</span>
             <span className="separator">/</span>
-            <span className="current">DIFUSIÓN Y GALERÍA (WEB)</span>
+            <span className="current">CONFIGURACIÓN DEL PORTAL</span>
           </nav>
-          <h1>Difusión y Galería (Web)</h1>
+          <h1>Configuración del Portal</h1>
           <p className="page-subtitle">
-            Gestiona el contenido de la Galería, Exposiciones y Textos del sitio público.
+            Gestiona el contenido, textos e imágenes de la página de inicio, de nosotros, del login y de las exposiciones virtuales.
           </p>
         </div>
       </header>
@@ -282,6 +329,40 @@ const DifusionGaleria = () => {
                 />
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#4a3b32' }}>Imagen de Fondo (Hero)</label>
+                  {configWeb.hero_imagen && (
+                    <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #eaeaea', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9f8f6' }}>
+                      <img src={configWeb.hero_imagen} alt="Hero actual" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    </div>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => setHeroFile(e.target.files[0])}
+                    style={{ fontSize: '12px' }}
+                  />
+                  {heroFile && <span style={{ fontSize: '11px', color: '#C05640' }}>Nueva: {heroFile.name}</span>}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#4a3b32' }}>Imagen de la Sección Nosotros</label>
+                  {configWeb.about_imagen && (
+                    <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #eaeaea', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9f8f6' }}>
+                      <img src={configWeb.about_imagen} alt="Nosotros actual" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    </div>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => setAboutFile(e.target.files[0])}
+                    style={{ fontSize: '12px' }}
+                  />
+                  {aboutFile && <span style={{ fontSize: '11px', color: '#C05640' }}>Nueva: {aboutFile.name}</span>}
+                </div>
+              </div>
+
               <Textarea 
                 label="Texto: Acerca del Archivo" 
                 name="about_texto" 
@@ -313,8 +394,79 @@ const DifusionGaleria = () => {
               </div>
 
               <div className="flex justify-end pt-4">
-                <button type="submit" className="btn-terracota">
-                  Guardar Cambios Web
+                <button type="submit" className="btn-terracota" disabled={isSavingConfig}>
+                  {isSavingConfig ? 'Guardando Cambios...' : 'Guardar Cambios Web'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </section>
+
+      {/* 2. Personalización del Login */}
+      <section style={{ marginBottom: '32px' }}>
+        <h2 className="section-card-title" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <LockIcon size={18} style={{ color: '#C05640' }} />
+          Personalización del Login
+        </h2>
+        <div style={{ padding: '24px', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #eaeaea' }}>
+          {loadingConfig ? (
+            <p className="text-sm text-cafe-noir/60 text-center py-8">Cargando configuración...</p>
+          ) : (
+            <form onSubmit={handleSaveConfigWeb} className="tw-scope space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <TextInput 
+                  label="Etiqueta Superior (Ej. Ministerio de Cultura)" 
+                  name="login_top_label" 
+                  value={configWeb.login_top_label} 
+                  onChange={(e) => setConfigWeb({...configWeb, login_top_label: e.target.value})}
+                  placeholder="Ej. Ministerio de Cultura"
+                />
+                <TextInput 
+                  label="Título de Inicio de Sesión" 
+                  name="login_titulo" 
+                  value={configWeb.login_titulo} 
+                  onChange={(e) => setConfigWeb({...configWeb, login_titulo: e.target.value})}
+                  placeholder="Ej. Archivo Regional de Folklore"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <TextInput 
+                  label="Subtítulo del Login" 
+                  name="login_subtitulo" 
+                  value={configWeb.login_subtitulo} 
+                  onChange={(e) => setConfigWeb({...configWeb, login_subtitulo: e.target.value})}
+                  placeholder="Ej. Patrimonio Cultural Luis Felipe Ramón y Rivera"
+                />
+                <TextInput 
+                  label="Etiqueta Inferior (Ej. Sistema de Gestión...)" 
+                  name="login_bottom_label" 
+                  value={configWeb.login_bottom_label} 
+                  onChange={(e) => setConfigWeb({...configWeb, login_bottom_label: e.target.value})}
+                  placeholder="Ej. Sistema de Gestión y Control Patrimonial"
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '380px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#4a3b32' }}>Imagen de Fondo de Login</label>
+                {configWeb.login_imagen && (
+                  <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #eaeaea', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9f8f6' }}>
+                    <img src={configWeb.login_imagen} alt="Login actual" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => setLoginFile(e.target.files[0])}
+                  style={{ fontSize: '12px' }}
+                />
+                {loginFile && <span style={{ fontSize: '11px', color: '#C05640' }}>Nueva: {loginFile.name}</span>}
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <button type="submit" className="btn-terracota" disabled={isSavingConfig}>
+                  {isSavingConfig ? 'Guardando Cambios...' : 'Guardar Cambios de Login'}
                 </button>
               </div>
             </form>
@@ -343,18 +495,20 @@ const DifusionGaleria = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {obrasColeccion.map(obra => (
-                    <tr key={obra.id_obra} className="border-b border-cafe-noir/5 hover:bg-cafe-noir/5 transition-colors">
-                      <td className="py-3 px-4">
-                        {obra.fotografia_principal ? (
-                          <img src={obra.fotografia_principal} alt={obra.titulo} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', margin: '0 auto' }} />
-                        ) : (
-                          <div style={{ width: '40px', height: '40px', backgroundColor: '#e2dacf', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a7a6a', margin: '0 auto' }}>
-                            <Camera size={20} />
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-sm font-medium text-cafe-noir">{obra.id_obra}</td>
+                    {obrasColeccion.map(obra => {
+                      const coverImage = obra.multimedia && obra.multimedia[0] ? obra.multimedia[0].url_archivo : null;
+                      return (
+                        <tr key={obra.id_obra} className="border-b border-cafe-noir/5 hover:bg-cafe-noir/5 transition-colors">
+                          <td className="py-3 px-4">
+                            {coverImage ? (
+                              <img src={coverImage} alt={obra.titulo} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', margin: '0 auto' }} />
+                            ) : (
+                              <div style={{ width: '40px', height: '40px', backgroundColor: '#e2dacf', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a7a6a', margin: '0 auto' }}>
+                                <Camera size={20} />
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-sm font-medium text-cafe-noir">{obra.codigo_qr_link}</td>
                       <td className="py-3 px-4 text-sm text-cafe-noir/80">{obra.titulo}</td>
                       <td className="py-3 px-4 text-center">
                         <label className="toggle-switch-wrapper inline-block">
@@ -367,7 +521,8 @@ const DifusionGaleria = () => {
                         </label>
                       </td>
                     </tr>
-                  ))}
+                  );
+                })}
                   {obrasColeccion.length === 0 && (
                     <tr>
                       <td colSpan="4" className="py-12 text-center text-sm text-cafe-noir/40">No hay obras en el inventario.</td>
@@ -608,4 +763,4 @@ const DifusionGaleria = () => {
   )
 }
 
-export default DifusionGaleria
+export default ConfiguracionPortal
