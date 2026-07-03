@@ -16,7 +16,9 @@ import {
   FileImage,
   File,
   User,
-  Paperclip
+  Paperclip,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import partituraImg from '../../assets/featured_partitura.png'
 import './InventarioPatrimonial.css'
@@ -25,6 +27,7 @@ import {
   createObraRequest,
   updateObraRequest,
   deleteObraRequest,
+  deleteObraWithPasswordRequest,
   getCultoresAprobadosRequest,
   getCategoriasRequest,
   createCategoriaRequest,
@@ -77,7 +80,7 @@ const InventarioPatrimonial = () => {
         setCategoriesList(prev => [...prev, nuevaCat])
         setNewPieceCategory(nuevaCat.id_categoria)
       } catch (err) {
-        alert('Error al añadir la categoría')
+        showAlert('Error al añadir la categoría: ' + err.message)
       }
     }
     setCustomCategory('')
@@ -108,6 +111,30 @@ const InventarioPatrimonial = () => {
   const [newPieceImage, setNewPieceImage] = useState(null)
   const [newPieceImageFile, setNewPieceImageFile] = useState(null)
   const [formError, setFormError] = useState('')
+
+  // Toast de éxito
+  const [successToast, setSuccessToast] = useState(null) // { titulo, modo }
+  const showSuccessToast = (titulo, modo) => {
+    setSuccessToast({ titulo, modo })
+    setTimeout(() => setSuccessToast(null), 4000)
+  }
+
+  // Modal de confirmación personalizado (reemplaza window.confirm)
+  const [confirmDialog, setConfirmDialog] = useState(null) // { message, onConfirm }
+  const showConfirm = (message, onConfirm) => setConfirmDialog({ message, onConfirm })
+  const handleConfirmYes = () => { const fn = confirmDialog?.onConfirm; setConfirmDialog(null); fn && fn() }
+  const handleConfirmNo  = () => setConfirmDialog(null)
+
+  // Modal de alerta personalizado (reemplaza alert)
+  const [alertDialog, setAlertDialog] = useState(null) // { message, isError }
+  const showAlert = (message, isError = true) => setAlertDialog({ message, isError })
+
+  // Modal de verificación de contraseña para eliminar obra
+  const [passwordDialog, setPasswordDialog] = useState(null) // { id_obra, titulo }
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deletePasswordError, setDeletePasswordError] = useState('')
+  const [showDeletePassword, setShowDeletePassword] = useState(false)
 
   // View Dossier (Expediente Técnico) Modal State
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
@@ -233,6 +260,8 @@ const InventarioPatrimonial = () => {
       await cargarDatos()
 
       // Reset and close
+      const obraTitulo = newPieceName.trim()
+      const modoGuardado = modalMode
       setNewPieceName('')
       setNewPieceCode('')
       setNewPieceAuthor(cultoresList[0]?.id_cultor || '')
@@ -245,20 +274,36 @@ const InventarioPatrimonial = () => {
       setEditingPieceId(null)
       setFormError('')
       setIsModalOpen(false)
+      showSuccessToast(obraTitulo, modoGuardado)
     } catch (err) {
       setFormError(err.message || 'Error al guardar la obra.')
     }
   }
 
-  // Delete Piece Handler (Logical Delete)
-  const handleDeletePiece = async (id) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este registro del inventario?')) {
-      try {
-        await deleteObraRequest(id, token)
-        await cargarDatos()
-      } catch (err) {
-        alert('Error al eliminar la obra: ' + err.message)
-      }
+  // Delete Piece Handler — pide contraseña del administrador
+  const handleDeletePiece = (piece) => {
+    setDeletePassword('')
+    setDeletePasswordError('')
+    setPasswordDialog({ id_obra: piece.id_obra, titulo: piece.titulo })
+  }
+
+  const handleConfirmPasswordDelete = async () => {
+    if (!deletePassword.trim()) {
+      setDeletePasswordError('Debes ingresar tu contraseña.')
+      return
+    }
+    setDeleteLoading(true)
+    setDeletePasswordError('')
+    try {
+      await deleteObraWithPasswordRequest(passwordDialog.id_obra, deletePassword, token)
+      await cargarDatos()
+      setPasswordDialog(null)
+      setDeletePassword('')
+      showSuccessToast(passwordDialog.titulo, 'delete')
+    } catch (err) {
+      setDeletePasswordError(err.message || 'Contraseña incorrecta.')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -571,7 +616,7 @@ const InventarioPatrimonial = () => {
                           <button 
                             className="grid-action-btn delete-btn" 
                             title="Eliminar Registro"
-                            onClick={() => handleDeletePiece(piece.id_obra)}
+                            onClick={() => handleDeletePiece(piece)}
                           >
                             <Trash2 size={15} />
                           </button>
@@ -773,6 +818,19 @@ const InventarioPatrimonial = () => {
                         ))}
                       </select>
                     </div>
+                    {/* Chip de ubicación heredada del cultor */}
+                    {(() => {
+                      const cultorSel = cultoresList.find(c => String(c.id_cultor) === String(newPieceAuthor))
+                      const parroquia = cultorSel?.parroquia?.nombre
+                      const municipio = cultorSel?.parroquia?.municipio?.nombre
+                      if (!municipio && !parroquia) return null
+                      return (
+                        <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                          <span>Ubicación asignada automáticamente: <strong>{[parroquia, municipio].filter(Boolean).join(', ')}</strong></span>
+                        </div>
+                      )
+                    })()}
                   </div>
                 </div>
                 {/* Category and Location Row */}
@@ -931,7 +989,7 @@ const InventarioPatrimonial = () => {
                       const nuevaCat = await createCategoriaRequest(standaloneCategoryName.trim(), token);
                       setCategoriesList([...categoriesList, nuevaCat]);
                     } catch (err) {
-                      alert('Error al crear categoría: ' + err.message);
+                      showAlert('Error al crear categoría: ' + err.message);
                     }
                   }
                   setStandaloneCategoryName('');
@@ -1125,6 +1183,165 @@ const InventarioPatrimonial = () => {
                 Listo / Guardar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de Confirmación (reemplaza window.confirm) ─── */}
+      {confirmDialog && (
+        <div className="custom-dialog-overlay" onClick={handleConfirmNo}>
+          <div className="custom-dialog-box" onClick={e => e.stopPropagation()}>
+            <div className="custom-dialog-icon warning">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <div className="custom-dialog-content">
+              <h3 className="custom-dialog-title">Confirmar eliminación</h3>
+              <p className="custom-dialog-message">{confirmDialog.message}</p>
+            </div>
+            <div className="custom-dialog-actions">
+              <button className="custom-dialog-btn secondary" onClick={handleConfirmNo}>
+                Cancelar
+              </button>
+              <button className="custom-dialog-btn danger" onClick={handleConfirmYes}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de Alerta/Error (reemplaza alert) ─────────── */}
+      {alertDialog && (
+        <div className="custom-dialog-overlay" onClick={() => setAlertDialog(null)}>
+          <div className="custom-dialog-box" onClick={e => e.stopPropagation()}>
+            <div className={`custom-dialog-icon ${alertDialog.isError ? 'error' : 'info'}`}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <div className="custom-dialog-content">
+              <h3 className="custom-dialog-title">{alertDialog.isError ? 'Ha ocurrido un error' : 'Aviso'}</h3>
+              <p className="custom-dialog-message">{alertDialog.message}</p>
+            </div>
+            <div className="custom-dialog-actions" style={{ justifyContent: 'flex-end' }}>
+              <button className="custom-dialog-btn primary" onClick={() => setAlertDialog(null)}>
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de Verificación de Contraseña para Eliminar ─── */}
+      {passwordDialog && (
+        <div className="custom-dialog-overlay" onClick={() => { setPasswordDialog(null); setDeletePassword(''); setDeletePasswordError('') }}>
+          <div className="custom-dialog-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="custom-dialog-icon warning">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <div className="custom-dialog-content">
+              <h3 className="custom-dialog-title">Verificar contraseña</h3>
+              <p className="custom-dialog-message" style={{ marginBottom: '16px' }}>
+                Ingresa tu contraseña de administrador para confirmar la eliminación de <strong>"{passwordDialog.titulo}"</strong>. Esta acción no se puede deshacer.
+              </p>
+              <div className="input-box-field" style={{ marginBottom: '0' }}>
+                <label htmlFor="delete-admin-password">Contraseña</label>
+                <div className="icon-input-container">
+                  <input
+                    type={showDeletePassword ? 'text' : 'password'}
+                    id="delete-admin-password"
+                    placeholder="••••••••"
+                    value={deletePassword}
+                    onChange={(e) => { setDeletePassword(e.target.value); setDeletePasswordError('') }}
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !deleteLoading) handleConfirmPasswordDelete() }}
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    className="eye-toggle-btn"
+                    onClick={() => setShowDeletePassword(prev => !prev)}
+                    aria-label={showDeletePassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#8B5A2B', padding: '4px', display: 'flex', alignItems: 'center' }}
+                  >
+                    {showDeletePassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {deletePasswordError && (
+                  <p style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px' }}>{deletePasswordError}</p>
+                )}
+              </div>
+            </div>
+            <div className="custom-dialog-actions">
+              <button className="custom-dialog-btn secondary" onClick={() => { setPasswordDialog(null); setDeletePassword(''); setDeletePasswordError('') }}>
+                Cancelar
+              </button>
+              <button className="custom-dialog-btn danger" onClick={handleConfirmPasswordDelete} disabled={deleteLoading}>
+                {deleteLoading ? (
+                  'Verificando...'
+                ) : (
+                  <>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    Eliminar obra
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de Éxito centrado ──────────────────────── */}
+      {successToast && (
+        <div className="success-modal-overlay" onClick={() => setSuccessToast(null)}>
+          <div className="success-modal-box" onClick={e => e.stopPropagation()}>
+
+            {/* Ícono grande animado */}
+            <div className="success-modal-icon-ring">
+              <svg className="success-modal-svg" viewBox="0 0 80 80" fill="none">
+                <circle
+                  className="success-ring-circle"
+                  cx="40" cy="40" r="36"
+                  stroke="#10b981" strokeWidth="4" fill="#e6f7f0"
+                />
+                <path
+                  className="success-check-draw"
+                  d="M24 41l11 11 21-24"
+                  stroke="#10b981" strokeWidth="5"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  fill="none"
+                />
+              </svg>
+            </div>
+
+            {/* Textos */}
+            <h2 className="success-modal-title">
+              {successToast.modo === 'create' ? '¡Obra registrada con éxito!' : successToast.modo === 'delete' ? '¡Obra eliminada con éxito!' : '¡Obra actualizada con éxito!'}
+            </h2>
+            <p className="success-modal-subtitle">
+              <strong>"{successToast.titulo}"</strong>{' '}
+              {successToast.modo === 'create'
+                ? 'fue incorporada al inventario patrimonial del archivo.'
+                : successToast.modo === 'delete'
+                  ? 'fue eliminada del inventario patrimonial permanentemente.'
+                  : 'fue guardada correctamente en el inventario.'}
+            </p>
+
+            {/* Botón cerrar */}
+            <button className="success-modal-close-btn" onClick={() => setSuccessToast(null)}>
+              Aceptar
+            </button>
+
+            {/* Barra de progreso */}
+            <div className="success-modal-progress" />
           </div>
         </div>
       )}

@@ -291,7 +291,7 @@ const ReportesCatalogo = () => {
           <div className="chart-card-header">
             <h3>Patrimonio por Municipio</h3>
             <span className="chart-total-badge">
-              {resumen.patrimonioPorMunicipio.reduce((s, i) => s + i.cantidad, 0)} obras
+              {resumen.totalObras} obra{resumen.totalObras !== 1 ? 's' : ''} en inventario
               &nbsp;&bull;&nbsp;
               {resumen.patrimonioPorMunicipio.length} municipios
             </span>
@@ -352,7 +352,7 @@ const ReportesCatalogo = () => {
               <div>
                 <h2 className="municipios-modal-title">Patrimonio por Municipio</h2>
                 <p className="municipios-modal-subtitle">
-                  {resumen.patrimonioPorMunicipio.reduce((s, i) => s + i.cantidad, 0)} obras registradas en {resumen.patrimonioPorMunicipio.filter(i => i.cantidad > 0).length} de {resumen.patrimonioPorMunicipio.length} municipios
+                  {resumen.totalObras} obra{resumen.totalObras !== 1 ? 's' : ''} en el inventario — {resumen.patrimonioPorMunicipio.reduce((s, i) => s + i.cantidad, 0)} con municipio registrado en {resumen.patrimonioPorMunicipio.filter(i => i.cantidad > 0).length} de {resumen.patrimonioPorMunicipio.length} municipios
                 </p>
               </div>
               <button className="municipios-modal-close" onClick={() => setModalMunicipios(false)} aria-label="Cerrar">

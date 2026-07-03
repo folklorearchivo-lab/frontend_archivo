@@ -8,8 +8,9 @@ import {
   Image as ImageIcon
 } from 'lucide-react'
 import './CultoresDirectory.css'
-import { getCultoresAprobadosRequest } from '../../services/api'
+import { getCultoresAprobadosRequest, toggleActivoCultorRequest } from '../../services/api'
 import ManualCultorForm from '../ManualCultorForm'
+import EditCultorForm from '../EditCultorForm'
 
 // Columnas de imagen reales en el modelo Cultores. Hoy siempre vendrán vacías
 // (no hay Multer/upload conectado todavía), por eso cada una resuelve a un
@@ -35,6 +36,10 @@ const CultoresDirectory = () => {
 
   // Modal de ingreso manual (mismo formulario de la web pública, adaptado)
   const [isManualFormOpen, setIsManualFormOpen] = useState(false)
+
+  // Modal de edición de expediente
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [cultorAEditar, setCultorAEditar] = useState(null)
 
   // Si el token venció o es inválido, limpia la sesión guardada y recarga: App.jsx
   // detecta que ya no hay 'user-authenticated' y vuelve a mostrar el Login.
@@ -170,13 +175,14 @@ const CultoresDirectory = () => {
                 <th>CÉDULA</th>
                 <th>CORREO DE CONTACTO</th>
                 <th>TELÉFONO</th>
+                <th>ESTADO</th>
                 <th className="text-right">ACCIONES</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="5">
+                  <td colSpan="6">
                     <div className="empty-grid-state">
                       <p className="empty-grid-title">Cargando directorio...</p>
                     </div>
@@ -184,7 +190,7 @@ const CultoresDirectory = () => {
                 </tr>
               ) : loadError ? (
                 <tr>
-                  <td colSpan="5">
+                  <td colSpan="6">
                     <div className="empty-grid-state">
                       <p className="empty-grid-title">No se pudo cargar el directorio</p>
                       <p className="empty-grid-desc">{loadError}</p>
@@ -219,6 +225,30 @@ const CultoresDirectory = () => {
                     <td>
                       <span className="cultor-subinfo">{cultor.telefono_contacto || '—'}</span>
                     </td>
+                    <td>
+                      <button
+                        className={`status-toggle-btn ${cultor.usuario?.activo ? 'active' : 'inactive'}`}
+                        onClick={async () => {
+                          const token = localStorage.getItem('auth-token')
+                          try {
+                            const { activo } = await toggleActivoCultorRequest(cultor.id_cultor, token)
+                            setCultores((prev) =>
+                              prev.map((c) =>
+                                c.id_cultor === cultor.id_cultor
+                                  ? { ...c, usuario: { ...c.usuario, activo } }
+                                  : c
+                              )
+                            )
+                          } catch (err) {
+                            alert(err.message)
+                          }
+                        }}
+                        title={cultor.usuario?.activo ? 'Desactivar cultor' : 'Activar cultor'}
+                      >
+                        <span className="status-dot" />
+                        <span>{cultor.usuario?.activo ? 'Activo' : 'Inactivo'}</span>
+                      </button>
+                    </td>
                     <td className="text-right">
                       <div className="grid-actions-row">
                         <button
@@ -231,13 +261,25 @@ const CultoresDirectory = () => {
                         >
                           <FolderOpen size={16} />
                         </button>
+                        <button
+                          className="grid-action-btn"
+                          title="Editar Expediente"
+                          onClick={() => {
+                            setCultorAEditar(cultor)
+                            setIsEditModalOpen(true)
+                          }}
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                          </svg>
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5">
+                  <td colSpan="6">
                     <div className="empty-grid-state">
                       <User size={40} />
                       <p className="empty-grid-title">No se encontraron cultores</p>
@@ -317,6 +359,10 @@ const CultoresDirectory = () => {
                 <div className="dossier-field">
                   <span className="dossier-label">Parroquia:</span>
                   <span className="dossier-value">{cultorSeleccionado.parroquia?.nombre || '—'}</span>
+                </div>
+                <div className="dossier-field">
+                  <span className="dossier-label">Municipio:</span>
+                  <span className="dossier-value">{cultorSeleccionado.parroquia?.municipio?.nombre || '—'}</span>
                 </div>
                 <div className="dossier-field">
                   <span className="dossier-label">Estatus de Vida:</span>
@@ -406,6 +452,17 @@ const CultoresDirectory = () => {
       <ManualCultorForm
         isOpen={isManualFormOpen}
         onClose={() => setIsManualFormOpen(false)}
+      />
+
+      {/* 6. Editar Expediente */}
+      <EditCultorForm
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setCultorAEditar(null)
+        }}
+        cultor={cultorAEditar}
+        onSuccess={cargarCultores}
       />
     </div>
   )

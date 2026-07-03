@@ -18,7 +18,7 @@ import { enviarCredenciales } from '../services/emailNotifications'
 
 const generos = ['Femenino', 'Masculino', 'Otro']
 
-const funcionalidades = ['Utilitaria', 'Decorativa', 'Ceremonial', 'Mixta']
+const funcionalidades = ['Utilitaria', 'Decorativa', 'Ceremonial']
 
 const recaudosRequeridos = [
   'Copia de la cédula de identidad',
@@ -40,6 +40,7 @@ const initialFormState = {
   segundo_nombre: '',
   primer_apellido: '',
   segundo_apellido: '',
+  seudonimo: '',
   fecha_nacimiento: '',
   genero: '',
   correo_contacto: '',
@@ -57,10 +58,8 @@ const initialFormState = {
 const initialCamposVisualesState = {
   lugarNacimiento: '',
   municipio: '',
-  oficio: '',
   especialidad: '',
   producto: '',
-  clasificacion: '',
   materiaPrima: '',
   fuenteMateriaPrima: '',
   comercializa: '',
@@ -81,6 +80,8 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
   const [form, setForm] = useState(initialFormState)
   const [camposVisuales, setCamposVisuales] = useState(initialCamposVisualesState)
   const [estaCertificado, setEstaCertificado] = useState(false)
+  const [oficiosSeleccionados, setOficiosSeleccionados] = useState([])
+  const [clasificacionSeleccionada, setClasificacionSeleccionada] = useState([])
   const [funcionalidadMarcada, setFuncionalidadMarcada] = useState([])
   const [recaudosMarcados, setRecaudosMarcados] = useState([])
   const [archivos, setArchivos] = useState([])
@@ -104,10 +105,9 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
   // de validar este requisito del lado del servidor por ahora.
   const [archivoCedula, setArchivoCedula] = useState([])
 
-  // Respaldo si el alta fue exitosa en la BD pero EmailJS falló al notificar: se
-  // muestran las credenciales aquí para que el admin las copie y las comunique
-  // manualmente (mismo patrón que ya usa PreRegistration.jsx).
-  const [credencialesSinNotificar, setCredencialesSinNotificar] = useState(null)
+  // Credenciales del cultor recién creado: se muestran SIEMPRE en el modal de éxito
+  // (no solo si EmailJS falla) para que el admin pueda copiarlas de inmediato.
+  const [credencialesRegistro, setCredencialesRegistro] = useState(null)
 
   // Municipios de la BD (ruta pública)
   const [municipiosList, setMunicipiosList] = useState([])
@@ -173,6 +173,11 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
       return
     }
 
+    if (cedulaNumero.length < 6 || cedulaNumero.length > 9) {
+      setSubmitError('La cédula debe tener entre 6 y 9 dígitos.')
+      return
+    }
+
     const archivo = archivoCedula[0]
     setIsSubmitting(true)
 
@@ -208,6 +213,12 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
         setDocumentoUploadError('Registro creado con éxito, pero hubo un error al cargar el documento de identidad.')
       }
 
+      // Guardar credenciales ANTES de resetear el formulario, para mostrarlas
+      // en el modal de éxito (el admin las ve y copia siempre, no solo si falla
+      // el correo).
+      const { correo, nombre, passwordTemporal } = respuesta.credencialesNuevas
+      setCredencialesRegistro({ correo, nombre, passwordTemporal })
+
       setForm(initialFormState)
       setCamposVisuales(initialCamposVisualesState)
       setCedulaPrefijo('V')
@@ -216,20 +227,20 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
       setTelefonoNumero('')
       setArchivoCedula([])
       setEstaCertificado(false)
+      setOficiosSeleccionados([])
+      setClasificacionSeleccionada([])
       setFuncionalidadMarcada([])
       setRecaudosMarcados([])
       setArchivos([])
       setEnviado(true)
       onSuccess?.()
 
-      // El backend siempre devuelve credencialesNuevas en este endpoint (el cultor
-      // queda aprobado de inmediato), así que aquí no es condicional como en
-      // PreRegistration.jsx — solo puede fallar el envío del correo, no su existencia.
-      const { correo, nombre, passwordTemporal } = respuesta.credencialesNuevas
+      // Envío de correo en segundo plano: si falla, el admin ya tiene las
+      // credenciales visibles en el modal de éxito.
       try {
         await enviarCredenciales({ correo, nombre, password: passwordTemporal, rol_usuario: 'Cultor' })
       } catch {
-        setCredencialesSinNotificar({ correo, nombre, passwordTemporal })
+        // Silencioso: las credenciales ya están en pantalla
       }
     } catch (error) {
       // El backend también responde 400 cuando falta correo_contacto (mensaje propio,
@@ -312,6 +323,13 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
                 value={form.segundo_apellido}
                 onChange={handleChange}
                 placeholder="Ej. Pérez"
+              />
+              <TextInput
+                label="Seudónimo"
+                name="seudonimo"
+                value={form.seudonimo}
+                onChange={handleChange}
+                placeholder="Ej. El Artesano de Capacho"
               />
               <div className="flex flex-col gap-2">
                 <span className="font-sans text-xs font-semibold uppercase tracking-wide text-cafe-noir">
@@ -442,7 +460,7 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
               <Checkbox
                 checked={estaCertificado}
                 onChange={() => setEstaCertificado((prev) => !prev)}
-                label="Cuenta con certificación de Fe de Vida vigente"
+                label="Cuenta con certificación vigente"
               />
             </div>
           </div>
@@ -451,17 +469,23 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
           <div className="space-y-0">
             <SectionTitle>II. Características de Oficio y Producto</SectionTitle>
             <div className="mt-2 grid grid-cols-1 gap-x-8 gap-y-7 md:grid-cols-2">
-              <SelectInput
-                label="Oficio"
-                name="oficio"
-                required
-                value={camposVisuales.oficio}
-                onChange={handleChange}
-                options={oficiosList.map((o) => ({
-                  value: o.nombre,
-                  label: o.nombre,
-                }))}
-              />
+              <div className="flex flex-col gap-2">
+                <span className="font-sans text-xs font-semibold uppercase tracking-wide text-cafe-noir">
+                  Oficio(s) <span> *</span>
+                </span>
+                <div className="flex flex-wrap gap-4">
+                  {oficiosList.map((o) => (
+                    <Checkbox
+                      key={o.id_oficio || o.nombre}
+                      checked={oficiosSeleccionados.includes(o.nombre)}
+                      onChange={() =>
+                        toggleEnLista(oficiosSeleccionados, setOficiosSeleccionados, o.nombre)
+                      }
+                      label={o.nombre}
+                    />
+                  ))}
+                </div>
+              </div>
               <TextInput
                 label="Especialidad"
                 name="especialidad"
@@ -498,12 +522,12 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
               </span>
               <div className="mt-3 flex flex-wrap gap-6">
                 {['Indígena', 'Tradicional', 'Contemporánea'].map((opcion) => (
-                  <Radio
+                  <Checkbox
                     key={opcion}
-                    name="clasificacion"
-                    value={opcion}
-                    checked={camposVisuales.clasificacion === opcion}
-                    onChange={handleChange}
+                    checked={clasificacionSeleccionada.includes(opcion)}
+                    onChange={() =>
+                      toggleEnLista(clasificacionSeleccionada, setClasificacionSeleccionada, opcion)
+                    }
                     label={opcion}
                   />
                 ))}
@@ -551,6 +575,7 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
                   value={camposVisuales.lugaresVenta}
                   onChange={handleChange}
                   placeholder="Ej. Mercado artesanal, ferias, encargos"
+                  disabled={camposVisuales.comercializa === 'No comercializa'}
                 />
               </div>
             </div>
@@ -574,7 +599,16 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
                 Requisito bloqueante para validar la identidad del cultor.
               </p>
               <div className="mt-3">
-                <Dropzone files={archivoCedula} onFilesChange={setArchivoCedula} />
+                <Dropzone files={archivoCedula} onFilesChange={setArchivoCedula} accept="image/jpeg,image/png,image/webp" maxSizeMB={5} minWidth={600} minHeight={400} />
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <span className="font-sans text-xs font-semibold uppercase tracking-wide text-cafe-noir">
+                Otros documentos de soporte (opcional)
+              </span>
+              <div className="mt-3">
+                <Dropzone files={archivos} onFilesChange={setArchivos} />
               </div>
             </div>
 
@@ -593,15 +627,6 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
                     label={recaudo}
                   />
                 ))}
-              </div>
-            </div>
-
-            <div className="mt-8">
-              <span className="font-sans text-xs font-semibold uppercase tracking-wide text-cafe-noir">
-                Otros documentos de soporte (opcional)
-              </span>
-              <div className="mt-3">
-                <Dropzone files={archivos} onFilesChange={setArchivos} />
               </div>
             </div>
           </div>
@@ -627,7 +652,8 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
       </div>
     </div>
 
-    {/* Modal de éxito: superpuesto y centrado, por encima del formulario */}
+    {/* Modal de éxito: superpuesto y centrado, por encima del formulario.
+        Siempre muestra las credenciales para que el admin las copie de inmediato. */}
     {enviado && (
       <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 bg-[#1a0f06]/70 backdrop-blur-sm">
         <div className="w-full max-w-md rounded-[2rem] bg-[#F4F0E6] p-8 sm:p-10 text-center shadow-2xl shadow-black/50">
@@ -642,9 +668,27 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
           </h3>
 
           <p className="mt-3 font-sans text-sm leading-relaxed text-cafe-noir/80">
-            El registro quedó aprobado de inmediato y sus credenciales de acceso
-            fueron enviadas a su correo.
+            El registro quedó aprobado de inmediato. A continuación sus
+            credenciales de acceso — cópielas y entréguelas al cultor.
           </p>
+
+          {credencialesRegistro && (
+            <div className="mt-6 rounded-2xl border border-cafe-noir/10 bg-white/70 p-5 space-y-3 text-left font-sans text-sm text-cafe-noir">
+              <p><span className="font-semibold">Cultor:</span> {credencialesRegistro.nombre}</p>
+              <p><span className="font-semibold">Correo:</span> {credencialesRegistro.correo}</p>
+              <p>
+                <span className="font-semibold">Contraseña temporal:</span>{' '}
+                <span className="font-mono font-bold text-tertiary select-all">{credencialesRegistro.passwordTemporal}</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => navigator.clipboard.writeText(credencialesRegistro.passwordTemporal)}
+                className="mt-2 w-full rounded-full border border-cafe-noir/30 px-4 py-2 font-sans text-xs font-semibold uppercase tracking-wide text-cafe-noir transition-opacity hover:opacity-80"
+              >
+                Copiar Contraseña
+              </button>
+            </div>
+          )}
 
           {documentoUploadError && (
             <p className="mt-4 rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-left font-sans text-sm text-amber-800">
@@ -654,54 +698,11 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
 
           <button
             type="button"
-            onClick={() => { setEnviado(false); setDocumentoUploadError('') }}
+            onClick={() => { setEnviado(false); setDocumentoUploadError(''); setCredencialesRegistro(null) }}
             className="mt-8 w-full rounded-full bg-cafe-noir px-6 py-3 font-sans text-sm font-semibold uppercase tracking-wider text-white shadow-md transition-opacity hover:opacity-80"
           >
             Aceptar
           </button>
-        </div>
-      </div>
-    )}
-
-    {/* Respaldo: el cultor ya quedó aprobado en la BD, pero EmailJS no pudo notificar.
-        Modal bloqueante para asegurar que el admin vea y copie la contraseña antes de cerrar. */}
-    {credencialesSinNotificar && (
-      <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 bg-[#1a0f06]/70 backdrop-blur-sm">
-        <div className="w-full max-w-md rounded-[2rem] bg-[#F4F0E6] p-8 sm:p-10 text-center shadow-2xl shadow-black/50">
-          <h3 className="font-sans text-xl font-bold tracking-tight text-cafe-noir">
-            Cultor Aprobado — Falta Notificar
-          </h3>
-
-          <p className="mt-3 rounded-xl border border-red-200/50 bg-red-50/60 px-4 py-3 text-left font-sans text-sm text-red-700">
-            El cultor fue registrado y aprobado, pero no se pudo enviar el correo con sus
-            credenciales. Copia esta contraseña y comunícasela manualmente.
-          </p>
-
-          <div className="mt-6 space-y-3 text-left font-sans text-sm text-cafe-noir">
-            <p><span className="font-semibold">Cultor:</span> {credencialesSinNotificar.nombre}</p>
-            <p><span className="font-semibold">Correo:</span> {credencialesSinNotificar.correo}</p>
-            <p>
-              <span className="font-semibold">Contraseña temporal:</span>{' '}
-              <span className="font-mono font-bold text-tertiary">{credencialesSinNotificar.passwordTemporal}</span>
-            </p>
-          </div>
-
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={() => navigator.clipboard.writeText(credencialesSinNotificar.passwordTemporal)}
-              className="w-full rounded-full border border-cafe-noir/30 px-6 py-2.5 font-sans text-xs font-semibold uppercase tracking-wide text-cafe-noir transition-opacity hover:opacity-80"
-            >
-              Copiar Contraseña
-            </button>
-            <button
-              type="button"
-              onClick={() => setCredencialesSinNotificar(null)}
-              className="w-full rounded-full bg-cafe-noir px-6 py-2.5 font-sans text-xs font-semibold uppercase tracking-wide text-white shadow-md transition-opacity hover:opacity-80"
-            >
-              Ya la comuniqué, cerrar
-            </button>
-          </div>
         </div>
       </div>
     )}

@@ -167,6 +167,40 @@ export async function ingresoManualCultorRequest(data, token) {
   }
 }
 
+// Obtener un cultor por ID (Administrativo)
+export async function getCultorByIdRequest(idCultor, token) {
+  exigirToken(token)
+  try {
+    const response = await axios.get(`${API_URL}/cultores/${idCultor}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al obtener el cultor'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// Actualizar un cultor existente (Administrativo)
+export async function updateCultorRequest(idCultor, data, token) {
+  exigirToken(token)
+  try {
+    const response = await axios.put(`${API_URL}/cultores/${idCultor}`, data, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al actualizar el cultor'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
 // Sube la foto/documento de cédula a Cloudinary (vía backend) y la asocia al id_cultor
 // recién creado. No fijamos Content-Type a mano: el navegador debe generar el boundary
 // del multipart automáticamente al detectar que el body es un FormData.
@@ -281,6 +315,23 @@ export async function actualizarEstatusCultorRequest(idCultor, estatus, token) {
   }
 }
 
+// Activar o desactivar el usuario vinculado a un cultor (toggle activo)
+export async function toggleActivoCultorRequest(idCultor, token) {
+  exigirToken(token)
+  try {
+    const response = await axios.patch(`${API_URL}/cultores/${idCultor}/activar`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al cambiar estado del cultor'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
 // ==========================================
 // OBRAS E INVENTARIO
 // ==========================================
@@ -382,6 +433,23 @@ export async function deleteObraRequest(idObra, token) {
   exigirToken(token)
   try {
     const response = await axios.delete(`${API_URL}/obras/${idObra}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al eliminar la obra'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// Eliminar una obra previa verificación de contraseña del administrador
+export async function deleteObraWithPasswordRequest(idObra, password, token) {
+  exigirToken(token)
+  try {
+    const response = await axios.post(`${API_URL}/obras/${idObra}/delete`, { password }, {
       headers: { Authorization: `Bearer ${token}` }
     })
     return response.data
