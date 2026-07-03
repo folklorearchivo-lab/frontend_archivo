@@ -6,6 +6,139 @@
   gap: 24px;
 }
 
+/* ── Encabezado de la sección de gráficas ─────────────────────────────────── */
+.charts-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: -8px;
+}
+
+/* Badge "Datos en vivo" con punto verde parpadeante */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+  border-radius: 9999px;
+  padding: 3px 10px 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  background: #16a34a;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+
+.last-updated-text {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Botón de recarga de gráficas */
+.btn-refresh-charts {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.2s;
+}
+
+.btn-refresh-charts:hover:not(:disabled) {
+  border-color: #C05640;
+  color: #C05640;
+}
+
+.btn-refresh-charts:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-refresh-charts .spinning {
+  animation: spin 0.7s linear infinite;
+}
+
+/* Encabezado interno de cada tarjeta de gráfica */
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chart-card-header h3 {
+  margin: 0;
+  border-left: 3px solid #C05640;
+  padding-left: 8px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* Badge con total real de obras */
+.chart-total-badge {
+  background: #fdf4f2;
+  border: 1px solid #f5d0c8;
+  color: #C05640;
+  border-radius: 9999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Etiquetas de barras de municipio mejoradas */
+.municipio-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.municipio-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.municipio-stats strong {
+  color: var(--text-main);
+  font-weight: 800;
+}
+
+.municipio-pct {
+  background: #f4f3f0;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
 /* KPIs Panel Grid */
 .kpis-grid {
   display: grid;
@@ -120,15 +253,274 @@
 .municipio-bars-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  overflow: hidden;
+  max-height: 320px;            /* ~5 ítems visibles */
+  transition: max-height 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.municipio-bars-container.expanded {
+  max-height: 2000px;           /* suficiente para cualquier número de municipios */
+}
+
+/* La tarjeta de municipios no tiene altura mínima fija: crece con su contenido */
+.municipio-chart-card {
+  min-height: unset !important;
+}
+
+/* Botón Ver todos / Ver menos */
+.btn-ver-municipios {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  flex-grow: 1;
+  gap: 7px;
+  width: 100%;
+  padding: 9px 0;
+  margin-top: 4px;
+  background: linear-gradient(135deg, #fdf4f2 0%, #faf9f7 100%);
+  border: 1px solid #f0cdc6;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #C05640;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.2px;
+}
+
+.btn-ver-municipios:hover {
+  background: #fde8e3;
+  border-color: #C05640;
+  box-shadow: 0 2px 8px rgba(192, 86, 64, 0.12);
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL: Todos los Municipios
+═══════════════════════════════════════════════════════════════ */
+
+.municipios-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 20, 18, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: overlay-in 0.2s ease;
+}
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.municipios-modal-card {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 780px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 25px 50px -12px rgba(0,0,0,0.25),
+    0 0 0 1px rgba(192,86,64,0.08);
+  animation: modal-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Header del modal */
+.municipios-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 28px 0;
+  gap: 16px;
+}
+
+.municipios-modal-title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a1614;
+  letter-spacing: -0.4px;
+}
+
+.municipios-modal-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #807471;
+  font-weight: 500;
+}
+
+.municipios-modal-close {
+  background: #f4f2ef;
+  border: none;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  font-size: 20px;
+  line-height: 1;
+  color: #4b403d;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.municipios-modal-close:hover {
+  background: #fde8e3;
+  color: #C05640;
+}
+
+/* Barra de resumen de 4 KPIs */
+.municipios-modal-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: #f0eeeb;
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 20px 28px;
+}
+
+.summary-stat {
+  background: #faf9f7;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.summary-stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #C05640;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.summary-stat-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #807471;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Grid de municipios en dos columnas con scroll */
+.municipios-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+  padding: 0 28px 28px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e5e1de transparent;
+}
+
+.municipios-modal-grid::-webkit-scrollbar { width: 5px; }
+.municipios-modal-grid::-webkit-scrollbar-thumb { background: #e5e1de; border-radius: 9999px; }
+
+/* Cada ítem del municipio en el modal */
+.modal-mun-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #faf9f7;
+  border: 1px solid #f0eeeb;
+  transition: box-shadow 0.15s;
+}
+
+.modal-mun-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.modal-mun-empty {
+  opacity: 0.5;
+}
+
+.modal-mun-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-mun-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.modal-mun-name {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1a1614;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal-mun-count {
+  font-size: 15px;
+  font-weight: 800;
+  color: #4b403d;
+  margin-left: auto;
+  min-width: 20px;
+  text-align: right;
+}
+
+.modal-mun-bar-track {
+  width: 100%;
+  height: 5px;
+  background: #ede9e6;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.modal-mun-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 0;
+}
+
+.modal-mun-pct {
+  font-size: 10.5px;
+  color: #a09490;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .municipios-modal-grid { grid-template-columns: 1fr; }
+  .municipios-modal-summary { grid-template-columns: repeat(2, 1fr); }
 }
 
 .municipio-bar-item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
+}
+
+/* Municipios sin obras: mostrar con opacidad reducida */
+.municipio-bar-item.sin-obras {
+  opacity: 0.45;
 }
 
 .municipio-bar-label-row {
@@ -156,7 +548,7 @@
 /* Right Chart: SVG Vector layout */
 .svg-chart-container {
   width: 100%;
-  height: 180px;
+  height: 185px;
   margin-top: auto;
   position: relative;
 }
@@ -182,10 +574,10 @@
 .svg-chart-line {
   fill: none;
   stroke: #C05640;
-  stroke-width: 3;
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 4px 6px rgba(192, 86, 64, 0.2));
+  filter: drop-shadow(0 3px 5px rgba(192, 86, 64, 0.22));
 }
 
 .svg-chart-dot {
@@ -193,12 +585,114 @@
   stroke: #C05640;
   stroke-width: 2.5;
   cursor: pointer;
-  transition: r 0.2s ease, fill 0.2s ease;
+  transition: r 0.15s ease, fill 0.15s ease;
 }
 
 .svg-chart-dot:hover {
-  r: 6px;
+  r: 6;
   fill: #C05640;
+}
+
+/* Tooltip de la gráfica de línea */
+.line-chart-tooltip {
+  position: absolute;
+  transform: translateX(-50%);
+  background: #2d2420;
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  white-space: nowrap;
+  z-index: 10;
+  animation: tooltip-in 0.12s ease;
+}
+
+@keyframes tooltip-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.tooltip-mes {
+  font-weight: 800;
+  font-size: 12px;
+  color: #f5c7bb;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  padding-bottom: 3px;
+  margin-bottom: 2px;
+}
+
+.tooltip-acumulado, .tooltip-nuevas {
+  color: #e5e1de;
+  font-size: 11px;
+}
+
+.tooltip-acumulado strong, .tooltip-nuevas strong {
+  color: #fff;
+}
+
+/* Estado de carga */
+.charts-loading-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 24px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid #e5e1de;
+  border-top-color: #C05640;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Estado de error */
+.charts-error-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 24px;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #991b1b;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.btn-retry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #C05640;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: auto;
+  transition: background 0.2s;
+}
+
+.btn-retry:hover {
+  background: #a84a35;
 }
 
 /* Export and Catalogue Section */

@@ -1,53 +1,204 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import {
   Search,
   FileText,
-  TrendingUp,
   DownloadCloud,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react'
 import './ReportesCatalogo.css'
+import {
+  getReportesResumenRequest,
+  getObrasAdminRequest,
+  exportarCultoresPdfRequest,
+  exportarObrasCsvRequest,
+  exportarCatalogoConsolidadoRequest,
+  exportarFichaCultorRequest,
+} from '../../services/api'
+
+const MUNICIPIO_COLORS = ['#C05640', '#b1791f', '#8a5a3c', '#807471', '#7a8454', '#c9a227']
+
+function formatearFechaCorta(fechaISO) {
+  if (!fechaISO) return 'Sin fecha'
+  return new Date(fechaISO).toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+// ── Gráfica SVG de línea: Tendencia de Crecimiento ──────────────────────────
+function LineChart({ puntos }) {
+  const [tooltip, setTooltip] = useState(null)
+  const svgRef = useRef(null)
+
+  const W = 380
+  const H = 160
+  const PAD_LEFT = 42
+  const PAD_RIGHT = 12
+  const PAD_TOP = 14
+  const PAD_BOTTOM = 28
+
+  const maxValor = Math.max(...puntos.map((p) => p.acumulado), 1)
+  // Techo redondeado para que el máximo no quede pegado al borde superior
+  const techo = maxValor <= 5 ? maxValor + 1 : Math.ceil(maxValor * 1.15)
+
+  const chartW = W - PAD_LEFT - PAD_RIGHT
+  const chartH = H - PAD_TOP - PAD_BOTTOM
+
+  const cx = (i) => PAD_LEFT + (puntos.length > 1 ? (i / (puntos.length - 1)) * chartW : chartW / 2)
+  const cy = (v) => PAD_TOP + chartH - (v / techo) * chartH
+
+  // Línea y área rellena
+  const linePath = puntos.map((p, i) => `${i === 0 ? 'M' : 'L'} ${cx(i).toFixed(1)} ${cy(p.acumulado).toFixed(1)}`).join(' ')
+  const areaPath = `${linePath} L ${cx(puntos.length - 1).toFixed(1)} ${(PAD_TOP + chartH).toFixed(1)} L ${cx(0).toFixed(1)} ${(PAD_TOP + chartH).toFixed(1)} Z`
+
+  // Etiquetas eje Y: 0, mitad, techo
+  const yLabels = [0, Math.round(techo / 2), techo]
+
+  // Líneas de cuadrícula
+  const gridYs = yLabels.map((v) => cy(v))
+
+  return (
+    <div className="svg-chart-container" style={{ position: 'relative' }}>
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+        <defs>
+          <linearGradient id="lineAreaGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#C05640" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#C05640" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* Grid lines */}
+        {gridYs.map((gy, i) => (
+          <line key={i} x1={PAD_LEFT} y1={gy.toFixed(1)} x2={W - PAD_RIGHT} y2={gy.toFixed(1)} className="svg-grid-line" />
+        ))}
+
+        {/* Y-axis labels */}
+        {yLabels.map((v, i) => (
+          <text key={i} x={PAD_LEFT - 6} y={cy(v) + 3} textAnchor="end" className="svg-axis-text">{v}</text>
+        ))}
+
+        {/* Area fill */}
+        <path d={areaPath} fill="url(#lineAreaGradient)" />
+
+        {/* Line */}
+        <path d={linePath} className="svg-chart-line" />
+
+        {/* X-axis labels & dots */}
+        {puntos.map((p, i) => (
+          <g key={p.mes}>
+            <text x={cx(i)} y={H - 4} textAnchor="middle" className="svg-axis-text">{p.mes}</text>
+            <circle
+              cx={cx(i)}
+              cy={cy(p.acumulado)}
+              r="4.5"
+              className="svg-chart-dot"
+              onMouseEnter={(e) => {
+                const svgRect = svgRef.current?.getBoundingClientRect()
+                if (!svgRect) return
+                const scaleX = svgRect.width / W
+                const scaleY = svgRect.height / H
+                setTooltip({
+                  x: cx(i) * scaleX,
+                  y: cy(p.acumulado) * scaleY,
+                  mes: p.mes,
+                  acumulado: p.acumulado,
+                  nuevas: p.cantidad,
+                })
+              }}
+              onMouseLeave={() => setTooltip(null)}
+            />
+          </g>
+        ))}
+      </svg>
+
+      {/* Tooltip flotante */}
+      {tooltip && (
+        <div
+          className="line-chart-tooltip"
+          style={{
+            left: tooltip.x,
+            top: tooltip.y - 52,
+          }}
+        >
+          <span className="tooltip-mes">{tooltip.mes}</span>
+          <span className="tooltip-acumulado">Total: <strong>{tooltip.acumulado}</strong></span>
+          <span className="tooltip-nuevas">Nuevas: <strong>{tooltip.nuevas}</strong></span>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const ReportesCatalogo = () => {
-  // Mock data for researchers catalogue
-  const catalogList = [
-    { id: 1, title: 'Tonada de San Sebastián (Partitura)', author: 'Juan R. Castañeda', technique: 'Música Tradicional', date: '14/05/2026' },
-    { id: 2, title: 'Cuatro de Cedro Tallado', author: 'Eleazar Rojas', technique: 'Luthiería', date: '18/05/2026' },
-    { id: 3, title: 'Vasija de Barro Cocido', author: 'María Sosa', technique: 'Cerámica', date: '22/05/2026' },
-    { id: 4, title: 'Traje de Danza Sanjuanero', author: 'Isabel de Rivera', technique: 'Costura Tradicional', date: '01/06/2026' },
-    { id: 5, title: 'Maracas de Capacho Tradicionales', author: 'Eleazar Rojas', technique: 'Artesanía Instrumentos', date: '03/06/2026' }
-  ]
+  const [resumen, setResumen] = useState(null)
+  const [catalogList, setCatalogList] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [lastUpdated, setLastUpdated] = useState(null)
+  const [modalMunicipios, setModalMunicipios] = useState(false)
+
+  const fetchData = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const token = localStorage.getItem('auth-token')
+      const [reportesData, obrasData] = await Promise.all([
+        getReportesResumenRequest(token),
+        getObrasAdminRequest(token),
+      ])
+      setResumen(reportesData)
+      setLastUpdated(new Date())
+      setCatalogList(obrasData.map((obra) => ({
+        id: obra.id_obra,
+        cultorId: obra.cultor?.id_cultor || null,
+        title: obra.titulo || 'Sin título',
+        author: obra.cultor ? `${obra.cultor.primer_nombre || ''} ${obra.cultor.primer_apellido || ''}`.trim() : 'Sin cultor asociado',
+        technique: obra.categoria?.nombre || 'Sin categoría',
+        date: formatearFechaCorta(obra.fecha_postulacion),
+      })))
+    } catch (err) {
+      console.error('Error al cargar reportes y catálogo:', err)
+      setError(err.message || 'No se pudo cargar la información de reportes y catálogo.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
 
   // States
   const [catalogQuery, setCatalogQuery] = useState('')
   const [isDownloading, setIsDownloading] = useState({
     pdf: false,
     excel: false,
-    logs: false,
     consolidated: false
   })
   const [notificationMsg, setNotificationMsg] = useState('')
 
   // Filter catalog list
-  const filteredCatalog = catalogList.filter(item => 
+  const filteredCatalog = catalogList.filter(item =>
     item.title.toLowerCase().includes(catalogQuery.toLowerCase()) ||
     item.author.toLowerCase().includes(catalogQuery.toLowerCase()) ||
     item.technique.toLowerCase().includes(catalogQuery.toLowerCase())
   )
 
-  // Simulation handler for file downloads
-  const handleExportFile = (format, label) => {
-    // Prevent double clicking
+  // Descarga real del archivo generado por el backend (PDF o CSV según el formato)
+  const handleExportFile = async (format, label, downloadFn) => {
     if (isDownloading[format]) return
 
     setIsDownloading(prev => ({ ...prev, [format]: true }))
     setNotificationMsg('')
 
-    // Simulate export latency
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem('auth-token')
+      await downloadFn(token)
+      setNotificationMsg(`¡Descarga completada! Se ha generado el archivo "${label}" correctamente.`)
+    } catch (err) {
+      console.error(`Error al exportar ${format}:`, err)
+      setNotificationMsg(`No se pudo generar el archivo "${label}": ${err.message}`)
+    } finally {
       setIsDownloading(prev => ({ ...prev, [format]: false }))
-      setNotificationMsg(`¡Descarga iniciada! Se ha generado el archivo "${label}" correctamente.`)
-    }, 1200)
+    }
   }
 
   return (
@@ -67,134 +218,176 @@ const ReportesCatalogo = () => {
         </div>
       </header>
 
+      {isLoading && (
+        <div className="charts-loading-state">
+          <div className="loading-spinner" />
+          <span>Consultando datos del sistema...</span>
+        </div>
+      )}
+      {!isLoading && error && (
+        <div className="charts-error-state">
+          <AlertCircle size={20} />
+          <span>{error}</span>
+          <button className="btn-retry" onClick={fetchData}>
+            <RefreshCw size={14} /> Reintentar
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !error && resumen && (
+      <>
       {/* 2. Panel de Indicadores (KPIs) */}
       <section className="kpis-grid">
         {/* KPI 1 */}
         <div className="kpi-card kpi-cultores">
           <span className="kpi-label">Total Cultores Registrados</span>
           <div className="kpi-value-row">
-            <span className="kpi-value">124</span>
-            <span className="kpi-trend-badge positive">
-              <TrendingUp size={12} />
-              <span>+12%</span>
-            </span>
+            <span className="kpi-value">{resumen.totalCultores.toLocaleString('es-VE')}</span>
           </div>
-          <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>+14 nuevos ingresos este mes</span>
         </div>
 
         {/* KPI 2 */}
         <div className="kpi-card kpi-inventario">
           <span className="kpi-label">Piezas en Inventario</span>
           <div className="kpi-value-row">
-            <span className="kpi-value">386</span>
-            <span className="kpi-trend-badge positive">
-              <TrendingUp size={12} />
-              <span>+8%</span>
-            </span>
+            <span className="kpi-value">{resumen.totalObras.toLocaleString('es-VE')}</span>
           </div>
-          <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>28 piezas catalogadas recientemente</span>
         </div>
 
         {/* KPI 3 */}
         <div className="kpi-card kpi-consultas">
-          <span className="kpi-label">Consultas del Catálogo (Mes)</span>
+          <span className="kpi-label">Categorías de Patrimonio</span>
           <div className="kpi-value-row">
-            <span className="kpi-value">1,240</span>
-            <span className="kpi-trend-badge neutral">
-              <span>=</span>
-            </span>
+            <span className="kpi-value">{resumen.totalCategorias.toLocaleString('es-VE')}</span>
           </div>
-          <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>14 investigadores autorizados activos</span>
         </div>
       </section>
 
-      {/* 3. Sección de Gráficos de Análisis (Simulados) */}
+      {/* 3. Sección de Gráficos de Análisis */}
+      <div className="charts-section-header">
+        <span className="live-badge">
+          <span className="live-dot" />
+          Datos en vivo
+        </span>
+        {lastUpdated && (
+          <span className="last-updated-text">
+            Actualizado: {lastUpdated.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </span>
+        )}
+        <button
+          className="btn-refresh-charts"
+          onClick={fetchData}
+          disabled={isLoading}
+          title="Recargar datos"
+        >
+          <RefreshCw size={14} className={isLoading ? 'spinning' : ''} />
+          Recargar
+        </button>
+      </div>
+
       <section className="charts-grid">
         {/* Left Chart: Patrimonio por Municipio */}
-        <div className="chart-card">
-          <h3>Patrimonio por Municipio</h3>
-          <div className="municipio-bars-container">
-            <div className="municipio-bar-item">
-              <div className="municipio-bar-label-row">
-                <span>San Cristóbal</span>
-                <span>42%</span>
-              </div>
-              <div className="municipio-bar-track">
-                <div className="municipio-bar-fill" style={{ width: '42%', backgroundColor: '#C05640' }}></div>
-              </div>
-            </div>
-
-            <div className="municipio-bar-item">
-              <div className="municipio-bar-label-row">
-                <span>Lobatera</span>
-                <span>28%</span>
-              </div>
-              <div className="municipio-bar-track">
-                <div className="municipio-bar-fill" style={{ width: '28%', backgroundColor: '#f59e0b' }}></div>
-              </div>
-            </div>
-
-            <div className="municipio-bar-item">
-              <div className="municipio-bar-label-row">
-                <span>Capacho</span>
-                <span>18%</span>
-              </div>
-              <div className="municipio-bar-track">
-                <div className="municipio-bar-fill" style={{ width: '18%', backgroundColor: '#d97706' }}></div>
-              </div>
-            </div>
-
-            <div className="municipio-bar-item">
-              <div className="municipio-bar-label-row">
-                <span>Otros Municipios</span>
-                <span>12%</span>
-              </div>
-              <div className="municipio-bar-track">
-                <div className="municipio-bar-fill" style={{ width: '12%', backgroundColor: '#807471' }}></div>
-              </div>
-            </div>
+        <div className="chart-card municipio-chart-card">
+          <div className="chart-card-header">
+            <h3>Patrimonio por Municipio</h3>
+            <span className="chart-total-badge">
+              {resumen.patrimonioPorMunicipio.reduce((s, i) => s + i.cantidad, 0)} obras
+              &nbsp;&bull;&nbsp;
+              {resumen.patrimonioPorMunicipio.length} municipios
+            </span>
           </div>
+
+          <div className="municipio-bars-container">
+            {resumen.patrimonioPorMunicipio.length === 0 && (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Aún no hay obras con ubicación registrada.</p>
+            )}
+            {resumen.patrimonioPorMunicipio.slice(0, 5).map((item, index) => (
+              <div className={`municipio-bar-item${item.cantidad === 0 ? ' sin-obras' : ''}`} key={item.municipio}>
+                <div className="municipio-bar-label-row">
+                  <span className="municipio-name">{item.municipio}</span>
+                  <span className="municipio-stats">
+                    <strong>{item.cantidad}</strong> obra{item.cantidad !== 1 ? 's' : ''}
+                    <span className="municipio-pct">{item.porcentaje}%</span>
+                  </span>
+                </div>
+                <div className="municipio-bar-track">
+                  <div className="municipio-bar-fill" style={{ width: `${item.porcentaje}%`, backgroundColor: MUNICIPIO_COLORS[index % MUNICIPIO_COLORS.length] }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {resumen.patrimonioPorMunicipio.length > 5 && (
+            <button className="btn-ver-municipios" onClick={() => setModalMunicipios(true)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 8l4 4-4 4M7 16l-4-4 4-4"/><line x1="21" y1="12" x2="3" y2="12"/></svg>
+              Ver todos los municipios ({resumen.patrimonioPorMunicipio.length})
+            </button>
+          )}
         </div>
 
         {/* Right Chart: Growth Line Chart via Inline SVG */}
         <div className="chart-card">
-          <h3>Tendencia de Crecimiento del Inventario (2026)</h3>
-          <div className="svg-chart-container">
-            <svg viewBox="0 0 400 180">
-              {/* Grid Lines */}
-              <line x1="40" y1="30" x2="380" y2="30" className="svg-grid-line" />
-              <line x1="40" y1="75" x2="380" y2="75" className="svg-grid-line" />
-              <line x1="40" y1="120" x2="380" y2="120" className="svg-grid-line" />
-              <line x1="40" y1="150" x2="380" y2="150" className="svg-grid-line" style={{ strokeDasharray: 'none', stroke: '#ebeae6' }} />
-
-              {/* Y Axis labels */}
-              <text x="15" y="34" className="svg-axis-text">400</text>
-              <text x="15" y="79" className="svg-axis-text">200</text>
-              <text x="15" y="124" className="svg-axis-text">100</text>
-              <text x="25" y="154" className="svg-axis-text">0</text>
-
-              {/* Chart Line Path */}
-              <path d="M 40 142 L 100 135 L 160 110 L 220 90 L 280 62 L 340 40" className="svg-chart-line" />
-
-              {/* Chart Dots */}
-              <circle cx="40" cy="142" r="4" className="svg-chart-dot" title="Ene: 60" />
-              <circle cx="100" cy="135" r="4" className="svg-chart-dot" title="Feb: 75" />
-              <circle cx="160" cy="110" r="4" className="svg-chart-dot" title="Mar: 124" />
-              <circle cx="220" cy="90" r="4" className="svg-chart-dot" title="Abr: 168" />
-              <circle cx="280" cy="62" r="4" className="svg-chart-dot" title="May: 250" />
-              <circle cx="340" cy="40" r="4" className="svg-chart-dot" title="Jun: 386" />
-
-              {/* X Axis Labels */}
-              <text x="32" y="170" className="svg-axis-text">Ene</text>
-              <text x="92" y="170" className="svg-axis-text">Feb</text>
-              <text x="152" y="170" className="svg-axis-text">Mar</text>
-              <text x="212" y="170" className="svg-axis-text">Abr</text>
-              <text x="272" y="170" className="svg-axis-text">May</text>
-              <text x="332" y="170" className="svg-axis-text">Jun</text>
-            </svg>
+          <div className="chart-card-header">
+            <h3>Tendencia de Crecimiento del Inventario</h3>
+            {resumen.tendenciaMensual.length > 0 && (
+              <span className="chart-total-badge">
+                {resumen.tendenciaMensual.at(-1)?.acumulado ?? 0} acumuladas
+              </span>
+            )}
           </div>
+          {resumen.tendenciaMensual.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 'auto 0' }}>Aún no hay obras con fecha registrada.</p>
+          ) : (
+            <LineChart puntos={resumen.tendenciaMensual} />
+          )}
         </div>
       </section>
+
+      {/* ===== MODAL: Todos los Municipios ===== */}
+      {modalMunicipios && (
+        <div className="municipios-modal-overlay" onClick={() => setModalMunicipios(false)}>
+          <div className="municipios-modal-card" onClick={(e) => e.stopPropagation()}>
+            {/* Header del modal */}
+            <div className="municipios-modal-header">
+              <div>
+                <h2 className="municipios-modal-title">Patrimonio por Municipio</h2>
+                <p className="municipios-modal-subtitle">
+                  {resumen.patrimonioPorMunicipio.reduce((s, i) => s + i.cantidad, 0)} obras registradas en {resumen.patrimonioPorMunicipio.filter(i => i.cantidad > 0).length} de {resumen.patrimonioPorMunicipio.length} municipios
+                </p>
+              </div>
+              <button className="municipios-modal-close" onClick={() => setModalMunicipios(false)} aria-label="Cerrar">
+                ×
+              </button>
+            </div>
+
+
+            {/* Lista completa en dos columnas */}
+            <div className="municipios-modal-grid">
+              {resumen.patrimonioPorMunicipio.map((item, index) => (
+                <div className={`modal-mun-item${item.cantidad === 0 ? ' modal-mun-empty' : ''}`} key={item.municipio}>
+                  <div className="modal-mun-header">
+                    <div className="modal-mun-dot" style={{ backgroundColor: item.cantidad > 0 ? MUNICIPIO_COLORS[index % MUNICIPIO_COLORS.length] : '#d9d4cf' }} />
+                    <span className="modal-mun-name">{item.municipio}</span>
+                    <span className="modal-mun-count">{item.cantidad}</span>
+                  </div>
+                  <div className="modal-mun-bar-track">
+                    <div
+                      className="modal-mun-bar-fill"
+                      style={{
+                        width: `${item.porcentaje}%`,
+                        backgroundColor: item.cantidad > 0 ? MUNICIPIO_COLORS[index % MUNICIPIO_COLORS.length] : '#e8e4e0',
+                      }}
+                    />
+                  </div>
+                  {item.cantidad > 0 && (
+                    <span className="modal-mun-pct">{item.porcentaje}% del total</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 4. Módulo de Exportación y Catálogo */}
       <section className="export-catalog-card">
@@ -206,31 +399,22 @@ const ReportesCatalogo = () => {
           </div>
 
           <div className="export-buttons-stack">
-            <button 
+            <button
               className="btn-export-pdf"
               disabled={isDownloading.pdf}
-              onClick={() => handleExportFile('pdf', 'reporte_patrimonio_auditoria.pdf')}
+              onClick={() => handleExportFile('pdf', 'reporte_cultores_registrados.pdf', exportarCultoresPdfRequest)}
             >
               <FileText size={18} />
               <span>{isDownloading.pdf ? 'Generando PDF...' : 'Descargar Reporte en PDF'}</span>
             </button>
 
-            <button 
+            <button
               className="btn-export-excel"
               disabled={isDownloading.excel}
-              onClick={() => handleExportFile('excel', 'inventario_patrimonio_completo.xlsx')}
+              onClick={() => handleExportFile('excel', 'inventario_obras.xlsx', exportarObrasCsvRequest)}
             >
               <FileText size={18} />
               <span>{isDownloading.excel ? 'Generando Excel...' : 'Descargar Excel de Inventario'}</span>
-            </button>
-
-            <button 
-              className="btn-export-logs"
-              disabled={isDownloading.logs}
-              onClick={() => handleExportFile('logs', 'logs_acciones_inventario.log')}
-            >
-              <FileText size={18} />
-              <span>{isDownloading.logs ? 'Exportando Logs...' : 'Exportar Auditoría de Logs'}</span>
             </button>
           </div>
         </div>
@@ -277,11 +461,16 @@ const ReportesCatalogo = () => {
                       <td>{item.author}</td>
                       <td>{item.technique}</td>
                       <td className="text-right">
-                        <button 
+                        <button
                           className="btn-export-inline"
-                          onClick={() => handleExportFile('pdf', `ficha_${item.id}_${item.title.toLowerCase().replace(/ /g, '_')}.pdf`)}
+                          disabled={!item.cultorId || isDownloading[`ficha-${item.id}`]}
+                          onClick={() => handleExportFile(
+                            `ficha-${item.id}`,
+                            `ficha_cultor_${item.cultorId}.pdf`,
+                            (token) => exportarFichaCultorRequest(item.cultorId, token)
+                          )}
                         >
-                          Exportar Ficha
+                          {isDownloading[`ficha-${item.id}`] ? 'Generando...' : 'Exportar Ficha'}
                         </button>
                       </td>
                     </tr>
@@ -298,6 +487,8 @@ const ReportesCatalogo = () => {
           </div>
         </div>
       </section>
+      </>
+      )}
 
       {/* Notification Banner */}
       {notificationMsg && (
@@ -312,10 +503,10 @@ const ReportesCatalogo = () => {
 
       {/* 5. Botón de Acción Principal */}
       <footer className="consolidated-action-container">
-        <button 
+        <button
           className="btn-consolidated-pdf"
           disabled={isDownloading.consolidated}
-          onClick={() => handleExportFile('consolidated', 'catalogo_consolidado_archivo_completo.pdf')}
+          onClick={() => handleExportFile('consolidated', 'catalogo_consolidado_archivo.pdf', exportarCatalogoConsolidadoRequest)}
         >
           <DownloadCloud size={18} />
           <span>

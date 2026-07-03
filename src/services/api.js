@@ -395,6 +395,91 @@ export async function deleteObraRequest(idObra, token) {
 }
 
 // ==========================================
+// DASHBOARD
+// ==========================================
+
+// Resumen estadístico consolidado del panel administrativo (solo Administrador)
+export async function getDashboardResumenRequest(token) {
+  exigirToken(token)
+  try {
+    const response = await axios.get(`${API_URL}/dashboard/resumen`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al obtener el resumen del dashboard'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// KPIs y gráficos del módulo Reportes y Catálogo (solo Administrador)
+export async function getReportesResumenRequest(token) {
+  exigirToken(token)
+  try {
+    const response = await axios.get(`${API_URL}/dashboard/reportes`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al obtener el resumen de reportes'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// Descarga genérica de archivos protegidos (PDF/CSV) generados por el backend.
+// Como es un endpoint autenticado, no se puede usar un <a href> plano: se pide el
+// archivo como blob con el token en el header y se dispara la descarga por JS.
+async function descargarArchivoRequest(path, token, nombreArchivoPorDefecto) {
+  exigirToken(token)
+  try {
+    const response = await axios.get(`${API_URL}${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: 'blob',
+    })
+    const contentDisposition = response.headers['content-disposition']
+    const match = contentDisposition && contentDisposition.match(/filename="(.+)"/)
+    const nombreArchivo = match ? match[1] : nombreArchivoPorDefecto
+
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = nombreArchivo
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al descargar el archivo'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+export function exportarCultoresPdfRequest(token) {
+  return descargarArchivoRequest('/dashboard/exportar/cultores-pdf', token, 'reporte_cultores_registrados.pdf')
+}
+
+export function exportarObrasCsvRequest(token) {
+  return descargarArchivoRequest('/dashboard/exportar/obras-csv', token, 'inventario_obras.xlsx')
+}
+
+export function exportarCatalogoConsolidadoRequest(token) {
+  return descargarArchivoRequest('/dashboard/exportar/catalogo-consolidado-pdf', token, 'catalogo_consolidado_archivo.pdf')
+}
+
+export function exportarFichaCultorRequest(idCultor, token) {
+  return descargarArchivoRequest(`/dashboard/exportar/ficha-cultor/${idCultor}`, token, `ficha_cultor_${idCultor}.pdf`)
+}
+
+// ==========================================
 // CONFIGURACIÓN WEB
 // ==========================================
 
