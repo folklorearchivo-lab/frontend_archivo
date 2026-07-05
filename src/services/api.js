@@ -56,11 +56,23 @@ export async function getNotificacionesRequest(token) {
 export async function marcarNotificacionesLeidasRequest(token) {
   try {
     const response = await axios.put(`${API_URL}/notificaciones/marcar-leidas`, {}, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}` }
     })
     return response.data
   } catch (error) {
     const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al marcar notificaciones'
+    throw new Error(errorMsg)
+  }
+}
+
+export async function marcarNotificacionLeidaRequest(id, token) {
+  try {
+    const response = await axios.patch(`${API_URL}/notificaciones/${id}/leer`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al marcar la notificación'
     throw new Error(errorMsg)
   }
 }

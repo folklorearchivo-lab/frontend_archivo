@@ -20,7 +20,7 @@ import {
 import './Layout.css'
 import adminAvatar from '../assets/admin_avatar.png'
 import ChangePasswordModal from './ChangePasswordModal'
-import { getProfileRequest, getNotificacionesRequest, marcarNotificacionesLeidasRequest, getObrasAdminRequest } from '../services/api'
+import { getProfileRequest, getNotificacionesRequest, marcarNotificacionesLeidasRequest, marcarNotificacionLeidaRequest, getObrasAdminRequest } from '../services/api'
 
 const Layout = ({ children, currentView, onViewChange, onLogout }) => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
@@ -87,12 +87,33 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
     setNotifAbiertas(nuevoEstado)
     if (nuevoEstado) {
       cargarNotificaciones()
-      const token = localStorage.getItem('auth-token')
-      if (token) {
-        marcarNotificacionesLeidasRequest(token)
-          .then(() => setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true }))))
-          .catch(() => {})
-      }
+    }
+  }
+
+  const marcarLeidas = () => {
+    const token = localStorage.getItem('auth-token')
+    if (!token) return
+    marcarNotificacionesLeidasRequest(token)
+      .then(() => setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true }))))
+      .catch(() => {})
+  }
+
+  const handleNotificacionClick = (n) => {
+    setNotifAbiertas(false)
+    const token = localStorage.getItem('auth-token')
+    if (!n.leida && token) {
+      marcarNotificacionLeidaRequest(n.id_notificacion, token)
+        .then(() => setNotificaciones((prev) => prev.map((notif) => notif.id_notificacion === n.id_notificacion ? { ...notif, leida: true } : notif)))
+        .catch(() => {})
+    }
+    // Navegar según el tipo de notificación
+    const tituloLower = (n.titulo || '').toLowerCase()
+    if (tituloLower.includes('obra')) {
+      handleViewChange('patrimonio')
+    } else if (tituloLower.includes('contrase') || tituloLower.includes('usuario') || tituloLower.includes('cuenta')) {
+      handleViewChange('usuarios')
+    } else {
+      handleViewChange('dashboard')
     }
   }
 
@@ -203,18 +224,6 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
           >
             <Landmark className="nav-icon" size={20} />
             <span>Inventario Patrimonial</span>
-            {obrasPendientesCount > 0 && (
-              <span
-                title={`${obrasPendientesCount} obra(s) pendiente(s) de aprobación`}
-                style={{
-                  marginLeft: 'auto', background: '#B4533C', color: '#fff', fontSize: '11px',
-                  fontWeight: 700, borderRadius: '999px', padding: '1px 7px', minWidth: '18px',
-                  textAlign: 'center', lineHeight: '16px',
-                }}
-              >
-                {obrasPendientesCount}
-              </span>
-            )}
           </button>
           <button
             onClick={() => handleViewChange('difusion')}
@@ -298,6 +307,11 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
               <button className="icon-btn" aria-label="Notificaciones" onClick={toggleNotificaciones}>
                 <Bell size={18} />
                 {noLeidas > 0 && <span className="notif-dot"></span>}
+                {obrasPendientesCount > 0 && (
+                  <span className="notif-badge" title={`${obrasPendientesCount} obra(s) pendiente(s) de aprobación`}>
+                    {obrasPendientesCount}
+                  </span>
+                )}
               </button>
               {notifAbiertas && (
                 <div
@@ -308,16 +322,32 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
                     boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50,
                   }}
                 >
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-color, #eee)', fontWeight: 600, fontSize: '13px' }}>
-                    Notificaciones
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-color, #eee)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>Notificaciones</span>
+                    {noLeidas > 0 && (
+                      <button onClick={marcarLeidas} style={{ fontSize: '11px', color: 'var(--primary-color, #c53813)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                        Marcar leídas
+                      </button>
+                    )}
                   </div>
-                  {notificaciones.length > 0 ? (
-                    notificaciones.map((n) => (
-                      <div key={n.id_notificacion} style={{ padding: '10px 16px', borderBottom: '1px solid #f1f1f1', background: n.leida ? 'transparent' : 'rgba(197,56,19,0.06)' }}>
+                  {notificaciones.length > 0 || obrasPendientesCount > 0 ? (
+                    <>
+                      {obrasPendientesCount > 0 && (
+                        <div
+                          onClick={() => { setNotifAbiertas(false); handleViewChange('preregistro') }}
+                          style={{ padding: '10px 16px', borderBottom: '1px solid #f1f1f1', cursor: 'pointer', background: 'rgba(197,56,19,0.06)' }}
+                        >
+                          <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#202124' }}>{obrasPendientesCount} obra(s) pendiente(s) de aprobación</p>
+                          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#5f6368' }}>Haz clic para revisar</p>
+                        </div>
+                      )}
+                      {notificaciones.map((n) => (
+                      <div key={n.id_notificacion} onClick={() => handleNotificacionClick(n)} style={{ padding: '10px 16px', borderBottom: '1px solid #f1f1f1', cursor: 'pointer', background: n.leida ? 'transparent' : 'rgba(197,56,19,0.06)' }}>
                         <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#202124' }}>{n.titulo}</p>
                         {n.mensaje && <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#5f6368' }}>{n.mensaje}</p>}
                       </div>
-                    ))
+                    ))}
+                    </>
                   ) : (
                     <div style={{ padding: '16px', fontSize: '12px', color: '#807471', textAlign: 'center' }}>Sin notificaciones</div>
                   )}

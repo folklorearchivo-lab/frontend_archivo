@@ -7,8 +7,10 @@ import {
 } from 'lucide-react'
 import './Login.css'
 import { loginRequest, getConfiguracionWebRequest } from '../../services/api'
+import { useToast } from '../../context/ToastContext'
 
 const Login = ({ onLoginSuccess }) => {
+  const { showToast } = useToast()
   const [email, setEmail] = useState('usuario@archivo.gob')
   const [password, setPassword] = useState('password123')
   const [showPassword, setShowPassword] = useState(false)
@@ -139,7 +141,7 @@ const Login = ({ onLoginSuccess }) => {
               className="support-link"
               onClick={(e) => {
                 e.preventDefault()
-                alert('Soporte Técnico: soporte@archivo.gob.ve')
+                showToast({ titulo: 'Soporte Técnico', mensaje: 'soporte@archivo.gob.ve', tipo: 'info' })
               }}
             >
               Contactar Soporte Técnico

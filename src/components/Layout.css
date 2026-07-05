@@ -611,6 +611,21 @@ body {
   border-radius: 50%;
 }
 
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  background: var(--orange-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 5px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 14px;
+}
+
 .admin-profile {
   display: flex;
   align-items: center;

@@ -10,6 +10,8 @@ import ReportesCatalogo from './components/pages/ReportesCatalogo'
 import Login from './components/pages/Login'
 import ForgotPassword from './components/pages/ForgotPassword'
 import ResetPassword from './components/pages/ResetPassword'
+import { ToastProvider } from './context/ToastContext'
+import Toast from './components/Toast'
 import './App.css'
 
 function App() {
@@ -37,38 +39,27 @@ function App() {
   // vistas es una recarga completa (<a href>, window.location.href), no SPA.
   const pathname = window.location.pathname
 
-  if (pathname === '/recuperar-password') {
-    return <ResetPassword />
-  }
-
-  if (pathname === '/olvide-password') {
-    return <ForgotPassword onBack={() => { window.location.href = '/' }} />
-  }
-
-  if (!isAuthenticated) {
-    return <Login onLoginSuccess={handleLogin} />
-  }
-
   return (
-    <Layout currentView={currentView} onViewChange={setCurrentView} onLogout={handleLogout}>
-      {currentView === 'dashboard' && <Dashboard onNavigate={setCurrentView} />}
-      {currentView === 'usuarios' && <UsersManagement />}
-      {currentView === 'cultores' && (
-        <CultoresDirectory />
+    <ToastProvider>
+      {pathname === '/recuperar-password' ? (
+        <ResetPassword />
+      ) : pathname === '/olvide-password' ? (
+        <ForgotPassword onBack={() => { window.location.href = '/' }} />
+      ) : !isAuthenticated ? (
+        <Login onLoginSuccess={handleLogin} />
+      ) : (
+        <Layout currentView={currentView} onViewChange={setCurrentView} onLogout={handleLogout}>
+          {currentView === 'dashboard' && <Dashboard onNavigate={setCurrentView} />}
+          {currentView === 'usuarios' && <UsersManagement />}
+          {currentView === 'cultores' && <CultoresDirectory />}
+          {currentView === 'preregistro' && <PreRegistration />}
+          {currentView === 'patrimonio' && <InventarioPatrimonial />}
+          {currentView === 'difusion' && <ConfiguracionPortal />}
+          {currentView === 'reportes' && <ReportesCatalogo />}
+        </Layout>
       )}
-      {currentView === 'preregistro' && (
-        <PreRegistration />
-      )}
-      {currentView === 'patrimonio' && (
-        <InventarioPatrimonial />
-      )}
-      {currentView === 'difusion' && (
-        <ConfiguracionPortal />
-      )}
-      {currentView === 'reportes' && (
-        <ReportesCatalogo />
-      )}
-    </Layout>
+      <Toast />
+    </ToastProvider>
   )
 }
 

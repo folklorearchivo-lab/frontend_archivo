@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import './CultoresDirectory.css'
 import { getCultoresAprobadosRequest, toggleActivoCultorRequest, getMunicipiosRequest, getParroquiasByMunicipioRequest, registrarFeDeVidaRequest } from '../../services/api'
+import { useToast } from '../../context/ToastContext'
 import ManualCultorForm from '../ManualCultorForm'
 import EditCultorForm from '../EditCultorForm'
 
@@ -22,6 +23,7 @@ const CAMPOS_IMAGEN = [
 ]
 
 const CultoresDirectory = () => {
+  const { showToast } = useToast()
   // Cultores reales (estatus = 'aprobado'), traídos del backend
   const [cultores, setCultores] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -130,7 +132,7 @@ const CultoresDirectory = () => {
         )
       )
     } catch (err) {
-      alert(err.message)
+      showToast({ titulo: 'Error', mensaje: err.message, tipo: 'error' })
     }
   }
 

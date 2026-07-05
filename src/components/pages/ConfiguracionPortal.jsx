@@ -21,6 +21,7 @@ import {
   updateEfemerideRequest,
   deleteEfemerideRequest
 } from '../../services/api'
+import { useToast } from '../../context/ToastContext'
 const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
@@ -31,6 +32,7 @@ const EFEMERIDE_FORM_INICIAL = {
 }
 
 const ConfiguracionPortal = () => {
+  const { showToast } = useToast()
   const token = localStorage.getItem('auth-token')
   const [iframeKey, setIframeKey] = useState(Date.now())
 
@@ -202,14 +204,14 @@ const ConfiguracionPortal = () => {
       }
 
       await updateConfiguracionWebRequest(formData, token)
-      alert("¡Configuración Web actualizada con éxito!")
+      showToast({ titulo: 'Configuración guardada', mensaje: 'La configuración web fue actualizada con éxito.', tipo: 'success' })
       setHeroFile(null)
       setAboutFile(null)
       setLoginFile(null)
       fetchConfigWeb()
       setIframeKey(Date.now())
     } catch (error) {
-      alert("Error al guardar la configuración web: " + (error.response?.data?.message || error.response?.data?.error || error.message))
+      showToast({ titulo: 'Error al guardar', mensaje: error.response?.data?.message || error.response?.data?.error || error.message, tipo: 'error' })
     } finally {
       setIsSavingConfig(false)
     }
@@ -225,7 +227,7 @@ const ConfiguracionPortal = () => {
       ))
       setIframeKey(Date.now())
     } catch (error) {
-      alert("Error al actualizar destacado de la obra")
+      showToast({ titulo: 'Error', mensaje: 'No se pudo actualizar el destacado de la obra.', tipo: 'error' })
     }
   }
 
@@ -236,7 +238,7 @@ const ConfiguracionPortal = () => {
       fetchExposiciones()
       setIframeKey(Date.now())
     } catch (error) {
-      alert("Error al cambiar estatus")
+      showToast({ titulo: 'Error', mensaje: 'No se pudo cambiar el estatus de la exposición.', tipo: 'error' })
     }
   }
 
@@ -247,7 +249,7 @@ const ConfiguracionPortal = () => {
         setExposiciones(prev => prev.filter(e => e.id_exposicion !== id))
         setIframeKey(Date.now())
       } catch (error) {
-        alert("Error al eliminar")
+        showToast({ titulo: 'Error', mensaje: 'No se pudo eliminar la exposición.', tipo: 'error' })
       }
     }
   }
@@ -338,7 +340,7 @@ const ConfiguracionPortal = () => {
       fetchEfemerides()
       setIframeKey(Date.now())
     } catch (error) {
-      alert(error.message || "Error al guardar la efeméride")
+      showToast({ titulo: 'Error', mensaje: error.message || 'No se pudo guardar la efeméride.', tipo: 'error' })
     }
   }
 
@@ -348,7 +350,7 @@ const ConfiguracionPortal = () => {
       fetchEfemerides()
       setIframeKey(Date.now())
     } catch (error) {
-      alert("Error al cambiar el estatus de la efeméride")
+      showToast({ titulo: 'Error', mensaje: 'No se pudo cambiar el estatus de la efeméride.', tipo: 'error' })
     }
   }
 
@@ -359,7 +361,7 @@ const ConfiguracionPortal = () => {
         setEfemerides(prev => prev.filter(e => e.id_efemeride !== id))
         setIframeKey(Date.now())
       } catch (error) {
-        alert("Error al eliminar")
+        showToast({ titulo: 'Error', mensaje: 'No se pudo eliminar la efeméride.', tipo: 'error' })
       }
     }
   }
@@ -390,7 +392,7 @@ const ConfiguracionPortal = () => {
       fetchExposiciones()
       setIframeKey(Date.now())
     } catch (error) {
-      alert("Error al guardar exposición")
+      showToast({ titulo: 'Error', mensaje: 'No se pudo guardar la exposición.', tipo: 'error' })
     }
   }
 
@@ -420,7 +422,7 @@ const ConfiguracionPortal = () => {
         setIframeKey(Date.now())
       }
     } catch (error) {
-      alert("Error al cambiar vínculo de la obra")
+      showToast({ titulo: 'Error', mensaje: 'No se pudo cambiar el vínculo de la obra.', tipo: 'error' })
     }
   }
 

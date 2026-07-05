@@ -34,8 +34,10 @@ import {
   createCategoriaRequest,
   uploadMultimediaRequest
 } from '../../services/api'
+import { useToast } from '../../context/ToastContext'
 
 const InventarioPatrimonial = () => {
+  const { showToast } = useToast()
   const token = localStorage.getItem('auth-token')
   
   const [inventario, setInventario] = useState([])
@@ -112,13 +114,6 @@ const InventarioPatrimonial = () => {
   const [newPieceImage, setNewPieceImage] = useState(null)
   const [newPieceImageFile, setNewPieceImageFile] = useState(null)
   const [formError, setFormError] = useState('')
-
-  // Toast de éxito
-  const [successToast, setSuccessToast] = useState(null) // { titulo, modo }
-  const showSuccessToast = (titulo, modo) => {
-    setSuccessToast({ titulo, modo })
-    setTimeout(() => setSuccessToast(null), 4000)
-  }
 
   // Modal de confirmación personalizado (reemplaza window.confirm)
   const [confirmDialog, setConfirmDialog] = useState(null) // { message, onConfirm }
@@ -275,7 +270,11 @@ const InventarioPatrimonial = () => {
       setEditingPieceId(null)
       setFormError('')
       setIsModalOpen(false)
-      showSuccessToast(obraTitulo, modoGuardado)
+      showToast({
+        titulo: modoGuardado === 'create' ? '¡Obra registrada con éxito!' : '¡Obra actualizada con éxito!',
+        mensaje: `"${obraTitulo}" ${modoGuardado === 'create' ? 'fue incorporada al inventario patrimonial.' : 'fue guardada correctamente en el inventario.'}`,
+        tipo: 'success',
+      })
     } catch (err) {
       setFormError(err.message || 'Error al guardar la obra.')
     }
@@ -300,7 +299,7 @@ const InventarioPatrimonial = () => {
       await cargarDatos()
       setPasswordDialog(null)
       setDeletePassword('')
-      showSuccessToast(passwordDialog.titulo, 'delete')
+      showToast({ titulo: '¡Obra eliminada con éxito!', mensaje: `"${passwordDialog.titulo}" fue eliminada del inventario patrimonial.`, tipo: 'success' })
     } catch (err) {
       setDeletePasswordError(err.message || 'Contraseña incorrecta.')
     } finally {
@@ -1295,52 +1294,6 @@ const InventarioPatrimonial = () => {
         </div>
       )}
 
-      {/* ── Modal de Éxito centrado ──────────────────────── */}
-      {successToast && (
-        <div className="success-modal-overlay" onClick={() => setSuccessToast(null)}>
-          <div className="success-modal-box" onClick={e => e.stopPropagation()}>
-
-            {/* Ícono grande animado */}
-            <div className="success-modal-icon-ring">
-              <svg className="success-modal-svg" viewBox="0 0 80 80" fill="none">
-                <circle
-                  className="success-ring-circle"
-                  cx="40" cy="40" r="36"
-                  stroke="#10b981" strokeWidth="4" fill="#e6f7f0"
-                />
-                <path
-                  className="success-check-draw"
-                  d="M24 41l11 11 21-24"
-                  stroke="#10b981" strokeWidth="5"
-                  strokeLinecap="round" strokeLinejoin="round"
-                  fill="none"
-                />
-              </svg>
-            </div>
-
-            {/* Textos */}
-            <h2 className="success-modal-title">
-              {successToast.modo === 'create' ? '¡Obra registrada con éxito!' : successToast.modo === 'delete' ? '¡Obra eliminada con éxito!' : '¡Obra actualizada con éxito!'}
-            </h2>
-            <p className="success-modal-subtitle">
-              <strong>"{successToast.titulo}"</strong>{' '}
-              {successToast.modo === 'create'
-                ? 'fue incorporada al inventario patrimonial del archivo.'
-                : successToast.modo === 'delete'
-                  ? 'fue eliminada del inventario patrimonial permanentemente.'
-                  : 'fue guardada correctamente en el inventario.'}
-            </p>
-
-            {/* Botón cerrar */}
-            <button className="success-modal-close-btn" onClick={() => setSuccessToast(null)}>
-              Aceptar
-            </button>
-
-            {/* Barra de progreso */}
-            <div className="success-modal-progress" />
-          </div>
-        </div>
-      )}
     </div>
   )
 }

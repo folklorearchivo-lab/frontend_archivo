@@ -1,0 +1,135 @@
+.toast-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(15, 10, 8, 0.5);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: dialogFadeIn 0.2s ease forwards;
+}
+
+.toast-modal-box {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 40px 36px 28px 36px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  position: relative;
+  animation: toastModalIn 0.35s cubic-bezier(0.34, 1.45, 0.64, 1) forwards;
+}
+
+@keyframes toastModalIn {
+  from { opacity: 0; transform: scale(0.8) translateY(20px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0);    }
+}
+
+@keyframes dialogFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.toast-modal-icon-ring {
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.toast-modal-icon-ring::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: var(--pulse-bg, rgba(16,185,129,0.08));
+  animation: ringPulse 2s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1);    opacity: 0.6; }
+  50%       { transform: scale(1.12); opacity: 0.2; }
+}
+
+.toast-modal-svg {
+  width: 90px;
+  height: 90px;
+  display: block;
+  position: relative;
+}
+
+.toast-ring-circle {
+  transform-origin: center;
+  animation: circleAppear 0.3s ease forwards;
+}
+
+@keyframes circleAppear {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.toast-check-draw {
+  stroke-dasharray: 55;
+  stroke-dashoffset: 55;
+  animation: drawCheck 0.5s ease 0.25s forwards;
+}
+
+@keyframes drawCheck {
+  to { stroke-dashoffset: 0; }
+}
+
+.toast-modal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.toast-modal-subtitle {
+  margin: 0;
+  font-size: 13.5px;
+  color: #6b7280;
+  line-height: 1.55;
+  max-width: 300px;
+}
+
+.toast-modal-close-btn {
+  margin-top: 8px;
+  padding: 11px 40px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  letter-spacing: 0.01em;
+}
+
+.toast-modal-close-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(16,185,129,0.45) !important;
+}
+
+.toast-modal-close-btn:active {
+  transform: scale(0.97);
+}
+
+.toast-modal-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  width: 100%;
+  transform-origin: left;
+  animation: toastProgress 4s linear forwards;
+}
+
+@keyframes toastProgress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}

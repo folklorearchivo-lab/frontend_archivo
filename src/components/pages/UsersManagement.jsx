@@ -13,9 +13,11 @@ import {
 } from 'lucide-react'
 import './UsersManagement.css'
 import { getUsersRequest, createUserRequest, getRolesRequest, toggleActivoUserRequest } from '../../services/api'
+import { useToast } from '../../context/ToastContext'
 import { enviarCredenciales } from '../../services/emailNotifications'
 
 const UsersManagement = () => {
+  const { showToast } = useToast()
   const [users, setUsers] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -272,7 +274,7 @@ const UsersManagement = () => {
                                 )
                               )
                             } catch (err) {
-                              alert(err.message)
+                              showToast({ titulo: 'Error', mensaje: err.message, tipo: 'error' })
                             }
                           }}
                           aria-label={user.activo ? 'Desactivar usuario' : 'Activar usuario'}

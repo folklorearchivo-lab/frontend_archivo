@@ -118,10 +118,11 @@ const PreRegistration = () => {
       setActiveTab('obras')
       sessionStorage.removeItem('prereg-tab')
     }
+    cargarPostulaciones()
+    cargarObrasPendientes()
   }, [])
 
   useEffect(() => {
-    setSearchQuery('')
     setSearchQuery('')
     if (activeTab === 'cultores') {
       cargarPostulaciones()
