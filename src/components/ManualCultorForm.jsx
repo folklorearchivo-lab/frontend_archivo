@@ -90,6 +90,7 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
   const [submitError, setSubmitError] = useState('')
   const [documentoUploadError, setDocumentoUploadError] = useState('')
   const [ocrErrores, setOcrErrores] = useState({})
+  const [datosOcr, setDatosOcr] = useState(null)
 
   // Cédula: prefijo V-/E- + dígitos, compuestos en un solo string ("V-12345678")
   // justo antes de enviar, en el formato exacto que valida el backend.
@@ -108,6 +109,7 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
   const setArchivoCedula = useCallback((val) => {
     _setArchivoCedula(val)
     setOcrErrores({})
+    setDatosOcr(null)
   }, [])
 
   // Credenciales del cultor recién creado: se muestran SIEMPRE en el modal de éxito
@@ -155,6 +157,9 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
           delete next.primer_apellido
           delete next.segundo_apellido
         }
+        if (name === 'cedulaPrefijo' || name === 'cedulaNumero' || name === 'cedula') {
+          delete next.cedula
+        }
         return next
       })
     }
@@ -182,7 +187,7 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
 
   function normalizarTexto(t) {
     return t
-      .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^A-Z\s]/gi, '')
       .trim().toUpperCase()
   }
@@ -194,16 +199,10 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
   }
 
   function palabrasIguales(a, b) {
-    const pa = normalizarTexto(a).split(/\s+/).filter(Boolean)
-    const pb = normalizarTexto(b).split(/\s+/).filter(Boolean)
-    if (pa.length === 0 || pb.length === 0) return false
-    for (const p of pa) {
-      if (!pb.includes(p)) return false
-    }
-    for (const p of pb) {
-      if (!pa.includes(p)) return false
-    }
-    return true
+    const textoA = normalizarTexto(a).replace(/\s+/g, '')
+    const textoB = normalizarTexto(b).replace(/\s+/g, '')
+    if (!textoA || !textoB) return false
+    return textoA === textoB
   }
 
   function validarOcrContraFormulario(datosOcr) {
@@ -265,6 +264,7 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
       // aquí y el registro nunca llega a crearse (a diferencia del flujo anterior, que
       // creaba el cultor primero y solo avisaba si el documento fallaba después).
       const resultadoOcr = await validarCedulaRequest(archivo)
+      setDatosOcr(resultadoOcr)
       const erroresOcr = validarOcrContraFormulario(resultadoOcr)
       if (Object.keys(erroresOcr).length > 0) {
         setOcrErrores(erroresOcr)
@@ -325,6 +325,8 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
       setFuncionalidadMarcada([])
       setRecaudosMarcados([])
       setArchivos([])
+      setDatosOcr(null)
+      setOcrErrores({})
       setEnviado(true)
       onSuccess?.()
 
@@ -699,7 +701,7 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
                 Requisito bloqueante para validar la identidad del cultor.
               </p>
               <div className="mt-3">
-                <Dropzone files={archivoCedula} onFilesChange={setArchivoCedula} accept="image/jpeg,image/png,image/webp" maxSizeMB={5} minWidth={600} minHeight={400} />
+                <Dropzone files={archivoCedula} onFilesChange={setArchivoCedula} accept="image/jpeg,image/png,image/webp" maxSizeMB={5} minWidth={600} minHeight={400} maxFiles={1} />
               </div>
             </div>
 
