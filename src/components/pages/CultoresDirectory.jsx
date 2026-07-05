@@ -404,7 +404,9 @@ const CultoresDirectory = () => {
                 <div className="dossier-field">
                   <span className="dossier-label">Fecha de Nacimiento:</span>
                   <span className="dossier-value">
-                    {cultorSeleccionado.fecha_nacimiento ? new Date(cultorSeleccionado.fecha_nacimiento).toLocaleDateString() : '—'}
+                    {cultorSeleccionado.fecha_nacimiento
+                      ? (() => { const [a, m, d] = cultorSeleccionado.fecha_nacimiento.split('T')[0].split('-'); return `${d}/${m}/${a}`; })()
+                      : '—'}
                   </span>
                 </div>
                 <div className="dossier-field">
