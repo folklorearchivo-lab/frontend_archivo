@@ -146,6 +146,22 @@ export async function createUserRequest(data, token) {
   }
 }
 
+export async function toggleActivoUserRequest(idUsuario, token) {
+  exigirToken(token)
+  try {
+    const response = await axios.patch(`${API_URL}/usuarios/${idUsuario}/toggle-activo`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al cambiar estado del usuario'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
 // Lanza un error marcado como "de sesión" cuando no hay token o el backend lo rechazó
 // (401/403). El componente que llama puede revisar `error.isAuthError` para decidir
 // si debe forzar el regreso al Login en vez de solo mostrar un mensaje genérico.
@@ -571,6 +587,23 @@ export async function getDashboardResumenRequest(token) {
       throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
     }
     const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al obtener el resumen del dashboard'
+    throw new Error(errorMsg, { cause: error })
+  }
+}
+
+// Conteo de tareas pendientes para el widget "Acciones Requeridas" del dashboard
+export async function getPendientesRequest(token) {
+  exigirToken(token)
+  try {
+    const response = await axios.get(`${API_URL}/dashboard/pendientes`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw crearErrorDeSesion('Tu sesión expiró o no es válida. Inicia sesión nuevamente.')
+    }
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al obtener pendientes'
     throw new Error(errorMsg, { cause: error })
   }
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import PageHeader from '../PageHeader'
 import {
   Search,
   Plus,
@@ -411,31 +412,26 @@ const InventarioPatrimonial = () => {
 
   return (
     <div className="inventario-module-container">
-      {/* 1. Cabecera de la Sección */}
-      <header className="page-header">
-        <div className="breadcrumbs-title">
-          <nav className="breadcrumbs">
-            <span>ARCHIVO</span>
-            <span className="separator">&gt;</span>
-            <span className="current">INVENTARIO PATRIMONIAL</span>
-          </nav>
-          <h1>Inventario Patrimonial</h1>
-          <p className="cultor-subinfo text-light" style={{ fontSize: '14px', marginTop: '4px' }}>
-            Fichas técnicas, registro multimedia y gestión de exposición cultural.
-          </p>
-        </div>
-
-        <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn-secondary" onClick={() => setIsStandaloneCategoryModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '8px', border: '1px solid #D2C5B4', backgroundColor: 'transparent', color: '#8B5A2B', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }}>
-            <FolderOpen size={16} />
-            <span>Nueva Categoría</span>
-          </button>
-          <button className="btn-terracota" onClick={handleOpenCreateModal}>
-            <Plus size={16} />
-            <span>Nueva Obra / Pieza</span>
-          </button>
-        </div>
-      </header>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'ARCHIVO' },
+          { label: 'INVENTARIO PATRIMONIAL', active: true },
+        ]}
+        title="Inventario Patrimonial"
+        description="Fichas técnicas, registro multimedia y gestión de exposición cultural."
+        actionButton={
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button className="ph-action-btn" onClick={() => setIsStandaloneCategoryModalOpen(true)} style={{ border: '1px solid #D2C5B4', backgroundColor: 'transparent', color: '#8B5A2B', boxShadow: 'none' }}>
+              <FolderOpen size={16} />
+              <span>Nueva Categoría</span>
+            </button>
+            <button className="ph-action-btn" onClick={handleOpenCreateModal}>
+              <Plus size={16} />
+              <span>Nueva Obra / Pieza</span>
+            </button>
+          </div>
+        }
+      />
 
       {/* 2. Barra de Filtros y Búsqueda */}
       <section className="filter-bar-card">

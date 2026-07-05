@@ -16,6 +16,9 @@
   --musgo: #707C55;
   --ocre: #A87F32;
   --marron: #5D4037;
+  /* Variables usadas en inline styles de páginas (PreRegistration.jsx, etc.) */
+  --primary: #72583E;
+  --border-light: #ece9e4;
 }
 
 body {
@@ -61,8 +64,8 @@ body {
   height: 26px;
   border-radius: 50%;
   background-color: var(--sidebar-bg);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #bfb7b5;
+  border: 1px solid rgba(180, 83, 60, 0.3);
+  color: #B4533C;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -74,8 +77,8 @@ body {
 
 .sidebar-toggle-btn:hover {
   color: #ffffff;
-  background-color: var(--sidebar-hover);
-  border-color: rgba(255, 255, 255, 0.35);
+  background-color: #B4533C;
+  border-color: #B4533C;
   transform: scale(1.1);
 }
 
@@ -211,8 +214,8 @@ body {
   border: none;
   text-align: left;
   cursor: pointer;
-  width: calc(100% - 16px);
-  margin: 0 8px;
+  width: calc(100% - 24px);
+  margin: 0 12px;
   font-family: inherit;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s;
 }
@@ -587,14 +590,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-main);
+  color: #B4533C;
   cursor: pointer;
   position: relative;
   transition: all 0.2s ease;
 }
 
 .icon-btn:hover {
-  background-color: #f5f2ef;
+  background-color: #f7ede9;
+  color: #96432F;
 }
 
 .notif-dot {
@@ -935,7 +939,7 @@ body {
   .sidebar.collapsed .nav-item                  { padding: 12px 16px !important; justify-content: flex-start !important; gap: 12px !important; }
   .sidebar.collapsed .nav-item span             { opacity: 1 !important; position: static !important; transform: none !important; pointer-events: auto !important; }
   .sidebar.collapsed .nav-item::after           { display: none !important; }
-  .sidebar.collapsed .nav-btn                   { width: calc(100% - 16px) !important; margin: 0 8px !important; }
+  .sidebar.collapsed .nav-btn                   { width: calc(100% - 24px) !important; margin: 0 12px !important; }
   .sidebar.collapsed .sidebar-nav               { padding: 0 8px !important; }
   .sidebar.collapsed .profile-badge             { justify-content: flex-start !important; gap: 12px !important; }
   .sidebar.collapsed .profile-badge::after      { display: none !important; }
@@ -1190,7 +1194,10 @@ body {
 /* ═══════════════════════════════════════════════════════════
    GLOBAL MODULE DESIGN SYSTEM
    Mejoras visuales transversales para todos los módulos.
-   No toca lógica ni conexiones — sólo estética.
+   Con !important para garantizar que las mejoras globales
+   se apliquen incluso cuando hay clases duplicadas en los
+   CSS específicos de cada página (CultoresDirectory.css,
+   PreRegistration.css, etc.).
 ═══════════════════════════════════════════════════════════ */
 
 /* ── Tarjeta de módulo mejorada (.card, .filter-bar-card, etc.) ── */
@@ -1216,7 +1223,9 @@ body {
 .users-table th,
 .prereg-table th,
 .inventario-table th,
-.obras-table th {
+.obras-table th,
+.exposiciones-table th,
+.efemerides-table th {
   background: linear-gradient(180deg, #f7f6f3 0%, #f3f1ee 100%);
   font-size: 10px !important;
   font-weight: 800 !important;
@@ -1236,7 +1245,9 @@ body {
 .users-table th:first-child,
 .prereg-table th:first-child,
 .inventario-table th:first-child,
-.obras-table th:first-child {
+.obras-table th:first-child,
+.exposiciones-table th:first-child,
+.efemerides-table th:first-child {
   border-radius: 12px 0 0 0;
   padding-left: 24px !important;
 }
@@ -1245,7 +1256,9 @@ body {
 .users-table th:last-child,
 .prereg-table th:last-child,
 .inventario-table th:last-child,
-.obras-table th:last-child {
+.obras-table th:last-child,
+.exposiciones-table th:last-child,
+.efemerides-table th:last-child {
   border-radius: 0 12px 0 0;
 }
 
@@ -1254,7 +1267,9 @@ body {
 .users-table td,
 .prereg-table td,
 .inventario-table td,
-.obras-table td {
+.obras-table td,
+.exposiciones-table td,
+.efemerides-table td {
   padding: 15px 18px !important;
   font-size: 13.5px !important;
   border-bottom: 1px solid #f3f1ee !important;
@@ -1266,7 +1281,9 @@ body {
 .users-table td:first-child,
 .prereg-table td:first-child,
 .inventario-table td:first-child,
-.obras-table td:first-child {
+.obras-table td:first-child,
+.exposiciones-table td:first-child,
+.efemerides-table td:first-child {
   padding-left: 24px !important;
 }
 
@@ -1275,7 +1292,9 @@ body {
 .users-table tbody tr:nth-child(even) td,
 .prereg-table tbody tr:nth-child(even) td,
 .inventario-table tbody tr:nth-child(even) td,
-.obras-table tbody tr:nth-child(even) td {
+.obras-table tbody tr:nth-child(even) td,
+.exposiciones-table tbody tr:nth-child(even) td,
+.efemerides-table tbody tr:nth-child(even) td {
   background-color: #faf9f7;
 }
 
@@ -1284,7 +1303,9 @@ body {
 .users-table tbody tr:hover td,
 .prereg-table tbody tr:hover td,
 .inventario-table tbody tr:hover td,
-.obras-table tbody tr:hover td {
+.obras-table tbody tr:hover td,
+.exposiciones-table tbody tr:hover td,
+.efemerides-table tbody tr:hover td {
   background-color: rgba(250, 247, 242, 0.6) !important;
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -1295,7 +1316,9 @@ body {
 .users-table tbody tr:last-child td,
 .prereg-table tbody tr:last-child td,
 .inventario-table tbody tr:last-child td,
-.obras-table tbody tr:last-child td {
+.obras-table tbody tr:last-child td,
+.exposiciones-table tbody tr:last-child td,
+.efemerides-table tbody tr:last-child td {
   border-bottom: none !important;
 }
 
@@ -1353,6 +1376,61 @@ body {
   background-color: #fdf0ed !important;
   border-color: #f5c5bb !important;
   color: #B4533C !important;
+}
+
+/* ── Botón primario global (terracota) ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #B4533C 0%, #96432F 100%) !important;
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(180, 83, 60, 0.28) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  line-height: 1.2;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #96432F 0%, #7D3827 100%) !important;
+  box-shadow: 0 4px 16px rgba(180, 83, 60, 0.36) !important;
+  transform: translateY(-2px) !important;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ── Botón secundario global (outline neutro) ── */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  background-color: #fbfbfa;
+  border: 1px solid #d8d7d3;
+  color: #736b68;
+  transition: all 0.2s ease;
+  line-height: 1.2;
+}
+
+.btn-secondary:hover {
+  background-color: #f0efea;
+  border-color: #a39996;
+  color: #2d1e1b;
 }
 
 /* ── Botón terracota global con gradiente ── */
@@ -1442,58 +1520,6 @@ body {
   transform: scale(1.05);
 }
 
-/* ── Sección page-header para todos los módulos ── */
-.prereg-module-container .page-header,
-.users-module-container .page-header,
-.cultores-module-container .page-header,
-.inventario-module-container .page-header,
-.config-module-container .page-header,
-.reportes-module-container .page-header {
-  padding-bottom: 24px;
-  border-bottom: none;
-  position: relative;
-  margin-bottom: 28px;
-}
-
-.prereg-module-container .page-header::after,
-.users-module-container .page-header::after,
-.cultores-module-container .page-header::after,
-.inventario-module-container .page-header::after,
-.config-module-container .page-header::after,
-.reportes-module-container .page-header::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 56px;
-  height: 2px;
-  background: linear-gradient(90deg, #B4533C, #A87F32);
-  border-radius: 9999px;
-}
-
-/* ── h1 de módulos con tamaño consistente ── */
-.prereg-module-container h1,
-.users-module-container .breadcrumbs-title h1,
-.cultores-module-container h1,
-.inventario-module-container h1,
-.config-module-container h1,
-.reportes-module-container h1 {
-  font-size: 29px !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.6px !important;
-  line-height: 1.1 !important;
-}
-
-/* ── Subtítulo de página ── */
-.page-subtitle,
-.cultor-subinfo.text-light {
-  font-size: 13.5px;
-  color: var(--text-secondary);
-  font-weight: 500;
-  margin-top: 4px;
-  line-height: 1.5;
-}
-
 /* ── Card dentro de módulos con hover ── */
 .card:hover,
 .filter-bar-card:hover,
@@ -1501,7 +1527,24 @@ body {
 .cultores-list-card:hover,
 .users-list-card:hover,
 .prereg-list-card:hover,
-.inventario-list-card:hover {
+.inventario-list-card:hover,
+.config-section-card:hover {
   box-shadow: 0 20px 60px rgba(93, 64, 55, 0.10);
   transform: translateY(-2px);
+}
+
+/* ── Título de sección dentro de tarjetas ── */
+.section-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.2px;
+}
+
+.section-card-title svg {
+  color: #B4533C;
 }

@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
+import PageHeader from '../PageHeader'
 import {
   Download,
   ChevronDown,
   BookOpen,
   MapPin,
-  Users
+  Users,
+  ClipboardList
 } from 'lucide-react'
 import './Dashboard.css'
-import { getDashboardResumenRequest } from '../../services/api'
+import { getDashboardResumenRequest, getPendientesRequest } from '../../services/api'
 
 const AVATAR_BG_CLASSES = ['bg-dark', 'bg-orange']
 
@@ -36,12 +38,26 @@ function formatearFecha(fechaISO) {
   return `${fecha.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' })}, ${hora}`
 }
 
-const Dashboard = () => {
+function SkeletonAccionItem() {
+  return (
+    <div className="accion-item skeleton">
+      <div className="accion-left">
+        <div className="skeleton-circle" />
+        <div className="skeleton-line" />
+      </div>
+      <div className="skeleton-btn" />
+    </div>
+  )
+}
+
+const Dashboard = ({ onNavigate }) => {
   const [resumen, setResumen] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [pendientes, setPendientes] = useState(null)
+  const [pendientesLoading, setPendientesLoading] = useState(true)
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
@@ -54,76 +70,41 @@ const Dashboard = () => {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
+
+  const fetchPendientes = useCallback(async () => {
+    setPendientesLoading(true)
+    try {
+      const token = localStorage.getItem('auth-token')
+      const data = await getPendientesRequest(token)
+      setPendientes(data)
+    } catch (err) {
+      console.error('Error al cargar pendientes:', err)
+    } finally {
+      setPendientesLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     fetchData()
-  }, [])
+    fetchPendientes()
+  }, [fetchData, fetchPendientes])
 
   return (
-    <>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          marginBottom: '32px'
-        }}
-      >
-        <div>
-          <nav
-            style={{
-              fontSize: '10.5px',
-              fontWeight: 700,
-              letterSpacing: '1.2px',
-              marginBottom: '10px',
-              textTransform: 'uppercase',
-              color: '#a39996',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <span>ARCHIVO</span>
-            <span style={{ color: '#d4cfcc' }}>&gt;</span>
-            <span style={{ color: '#B4533C' }}>DASHBOARD</span>
-          </nav>
-          <h1
-            className="dash-title"
-            style={{
-              fontWeight: 800,
-              color: '#5D4037',
-              letterSpacing: '-0.7px',
-              lineHeight: 1.25,
-              margin: 0
-            }}
-          >
-            Resumen Estadístico Consolidado
-          </h1>
-        </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 24px',
-              fontSize: '13.5px',
-              fontWeight: 700,
-              borderRadius: '12px',
-              backgroundColor: '#fff',
-              color: '#5D4037',
-              boxShadow: '0 2px 8px rgba(93,64,55,0.06)',
-              cursor: 'pointer',
-              border: 'none',
-              transition: 'all 0.2s ease'
-            }}
-          >
+    <div className="dashboard-module-container">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'ARCHIVO' },
+          { label: 'DASHBOARD', active: true },
+        ]}
+        title="Resumen Estadístico Consolidado"
+        actionButton={
+          <button className="ph-action-btn">
             <Download size={16} />
             <span>Exportar Reporte</span>
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {isLoading && <p>Cargando...</p>}
       {!isLoading && error && <p>{error}</p>}
@@ -134,8 +115,8 @@ const Dashboard = () => {
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '24px',
-              marginBottom: '40px'
+              gap: '1.5rem',
+              marginBottom: '1.5rem'
             }}
             aria-label="Estadísticas rápidas"
           >
@@ -144,24 +125,24 @@ const Dashboard = () => {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '20px'
+                gap: '12px'
               }}
             >
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '14px',
+                  gap: '12px',
                   position: 'relative',
                   zIndex: 10
                 }}
               >
                 <div
                   style={{
-                    width: 48,
-                    height: 48,
-                    minWidth: 48,
-                    borderRadius: 16,
+                    width: 40,
+                    height: 40,
+                    minWidth: 40,
+                    borderRadius: 14,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -170,11 +151,11 @@ const Dashboard = () => {
                     boxShadow: '0 8px 16px -6px rgba(180,83,60,0.30)'
                   }}
                 >
-                  <Users size={22} />
+                  <Users size={18} />
                 </div>
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: '11px',
                     fontWeight: 700,
                     color: '#5D4037',
                     letterSpacing: '0.3px',
@@ -186,7 +167,7 @@ const Dashboard = () => {
               </div>
               <span
                 style={{
-                  fontSize: '48px',
+                  fontSize: '2.5rem',
                   fontWeight: 900,
                   color: '#5D4037',
                   letterSpacing: '-1.5px',
@@ -204,24 +185,24 @@ const Dashboard = () => {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '20px'
+                gap: '12px'
               }}
             >
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '14px',
+                  gap: '12px',
                   position: 'relative',
                   zIndex: 10
                 }}
               >
                 <div
                   style={{
-                    width: 48,
-                    height: 48,
-                    minWidth: 48,
-                    borderRadius: 16,
+                    width: 40,
+                    height: 40,
+                    minWidth: 40,
+                    borderRadius: 14,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -230,11 +211,11 @@ const Dashboard = () => {
                     boxShadow: '0 8px 16px -6px rgba(168,127,50,0.30)'
                   }}
                 >
-                  <BookOpen size={22} />
+                  <BookOpen size={18} />
                 </div>
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: '11px',
                     fontWeight: 700,
                     color: '#5D4037',
                     letterSpacing: '0.3px',
@@ -246,7 +227,7 @@ const Dashboard = () => {
               </div>
               <span
                 style={{
-                  fontSize: '48px',
+                  fontSize: '2.5rem',
                   fontWeight: 900,
                   color: '#5D4037',
                   letterSpacing: '-1.5px',
@@ -264,24 +245,24 @@ const Dashboard = () => {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '20px'
+                gap: '12px'
               }}
             >
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '14px',
+                  gap: '12px',
                   position: 'relative',
                   zIndex: 10
                 }}
               >
                 <div
                   style={{
-                    width: 48,
-                    height: 48,
-                    minWidth: 48,
-                    borderRadius: 16,
+                    width: 40,
+                    height: 40,
+                    minWidth: 40,
+                    borderRadius: 14,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -290,11 +271,11 @@ const Dashboard = () => {
                     boxShadow: '0 8px 16px -6px rgba(93,64,55,0.30)'
                   }}
                 >
-                  <MapPin size={22} />
+                  <MapPin size={18} />
                 </div>
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: '11px',
                     fontWeight: 700,
                     color: '#5D4037',
                     letterSpacing: '0.3px',
@@ -306,7 +287,7 @@ const Dashboard = () => {
               </div>
               <span
                 style={{
-                  fontSize: '48px',
+                  fontSize: '2.5rem',
                   fontWeight: 900,
                   color: '#5D4037',
                   letterSpacing: '-1.5px',
@@ -324,14 +305,14 @@ const Dashboard = () => {
             style={{
               display: 'grid',
               gridTemplateColumns: '2fr 1fr',
-              gap: '28px'
+              gap: '1.5rem'
             }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
               <div
                 className="card-panel"
                 style={{
-                  marginBottom: '28px'
+                  marginBottom: '1.5rem'
                 }}
               >
                 <div
@@ -339,12 +320,12 @@ const Dashboard = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '28px'
+                    marginBottom: '1.25rem'
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: '17px',
+                      fontSize: '15px',
                       fontWeight: 800,
                       color: '#5D4037',
                       margin: 0,
@@ -374,21 +355,21 @@ const Dashboard = () => {
                   </button>
                 </div>
                 <div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'flex-end',
-                      gap: 'clamp(16px, 4vw, 48px)',
-                      height: 240,
-                      padding: '10px 0',
-                      flexWrap: 'wrap'
-                    }}
-                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'flex-end',
+                        gap: 'clamp(12px, 3vw, 36px)',
+                        height: 180,
+                        padding: '8px 0',
+                        flexWrap: 'wrap'
+                      }}
+                    >
                     {resumen.distribucionCategorias.length === 0 && (
                       <p>Aún no hay obras catalogadas.</p>
                     )}
-                    {resumen.distribucionCategorias.map((categoria, index) => {
+                    {resumen.distribucionCategorias.filter(c => c.cantidad > 0).map((categoria, index) => {
                       const color = CHART_COLORS[index % CHART_COLORS.length]
                       return (
                         <div
@@ -454,12 +435,12 @@ const Dashboard = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '20px'
+                    marginBottom: '1rem'
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: '17px',
+                      fontSize: '15px',
                       fontWeight: 800,
                       color: '#5D4037',
                       margin: 0,
@@ -611,57 +592,50 @@ const Dashboard = () => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              {resumen.piezaDestacada && (
-                <div
-                  className="card-panel"
-                  style={{
-                    overflow: 'hidden'
-                  }}
-                >
-                  {resumen.piezaDestacada.imagenUrl && (
-                    <div
-                      className="featured-img-wrapper"
-                      style={{ height: 160, width: '100%' }}
-                    >
-                      <img
-                        src={resumen.piezaDestacada.imagenUrl}
-                        alt={resumen.piezaDestacada.titulo}
-                        className="featured-img"
-                      />
-                    </div>
-                  )}
-                  <div style={{ padding: '24px' }}>
-                    <span
-                      style={{
-                        fontSize: '9px',
-                        fontWeight: 700,
-                        color: '#B4533C',
-                        letterSpacing: '1px',
-                        display: 'block',
-                        marginBottom: '6px'
-                      }}
-                    >
-                      PIEZA DESTACADA
-                    </span>
-                    <h4
-                      style={{
-                        fontSize: '16px',
-                        fontWeight: 700,
-                        color: '#5D4037',
-                        margin: 0,
-                        letterSpacing: '-0.3px'
-                      }}
-                    >
-                      {resumen.piezaDestacada.titulo}
-                    </h4>
-                  </div>
+              <div className="card-panel acciones-card">
+                <div className="acciones-header">
+                  <ClipboardList size={16} />
+                  <span>Acciones Requeridas</span>
                 </div>
-              )}
+                <div className="acciones-list">
+                  {pendientesLoading ? (
+                    <>
+                      <SkeletonAccionItem />
+                      <SkeletonAccionItem />
+                    </>
+                  ) : (
+                    <>
+                      <div className="accion-item">
+                        <div className="accion-left">
+                          <span className={`accion-number ${(pendientes?.cultoresPendientes ?? 0) > 0 ? 'has-items' : ''}`}>
+                            {pendientes?.cultoresPendientes ?? 0}
+                          </span>
+                          <span className="accion-desc">Solicitudes de cultores por verificar</span>
+                        </div>
+                        <button className="accion-btn" onClick={() => onNavigate?.('preregistro')}>
+                          Revisar
+                        </button>
+                      </div>
+                      <div className="accion-item">
+                        <div className="accion-left">
+                          <span className={`accion-number ${(pendientes?.obrasPendientes ?? 0) > 0 ? 'has-items' : ''}`}>
+                            {pendientes?.obrasPendientes ?? 0}
+                          </span>
+                          <span className="accion-desc">Obras pendientes de catalogación</span>
+                        </div>
+                        <button className="accion-btn" onClick={() => { sessionStorage.setItem('prereg-tab', 'obras'); onNavigate?.('preregistro') }}>
+                          Revisar
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </>
       )}
-    </>
+    </div>
   )
 }
 

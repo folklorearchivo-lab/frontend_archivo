@@ -51,7 +51,7 @@ function App() {
 
   return (
     <Layout currentView={currentView} onViewChange={setCurrentView} onLogout={handleLogout}>
-      {currentView === 'dashboard' && <Dashboard />}
+      {currentView === 'dashboard' && <Dashboard onNavigate={setCurrentView} />}
       {currentView === 'usuarios' && <UsersManagement />}
       {currentView === 'cultores' && (
         <CultoresDirectory />

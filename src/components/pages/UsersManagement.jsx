@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import PageHeader from '../PageHeader'
 import {
   Search,
   Plus,
@@ -11,7 +12,7 @@ import {
   UserX
 } from 'lucide-react'
 import './UsersManagement.css'
-import { getUsersRequest, createUserRequest, getRolesRequest } from '../../services/api'
+import { getUsersRequest, createUserRequest, getRolesRequest, toggleActivoUserRequest } from '../../services/api'
 import { enviarCredenciales } from '../../services/emailNotifications'
 
 const UsersManagement = () => {
@@ -161,22 +162,19 @@ const UsersManagement = () => {
 
   return (
     <div className="users-module-container">
-      {/* Header and Action */}
-      <div className="page-header">
-        <div className="breadcrumbs-title">
-          <nav className="breadcrumbs">
-            <span>ARCHIVO</span>
-            <span className="separator">&gt;</span>
-            <span className="current">GESTIÓN DE USUARIOS</span>
-          </nav>
-          <h1>Gestión de Usuarios</h1>
-        </div>
-
-        <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-          <Plus size={16} />
-          <span>Crear Usuario</span>
-        </button>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'ARCHIVO' },
+          { label: 'GESTIÓN DE USUARIOS', active: true },
+        ]}
+        title="Gestión de Usuarios"
+        actionButton={
+          <button className="ph-action-btn" onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} />
+            <span>Crear Usuario</span>
+          </button>
+        }
+      />
 
       {/* Filter and Search Bar */}
       <section className="filter-controls-card">
@@ -259,10 +257,34 @@ const UsersManagement = () => {
                       </span>
                     </td>
                     <td>
-                      <span className={`status-badge ${user.activo ? 'activo' : 'inactivo'}`}>
-                        <span className="status-dot"></span>
-                        {user.activo ? 'Activo' : 'Inactivo'}
-                      </span>
+                      <div className="toggle-wrapper">
+                        <button
+                          className={`toggle-btn ${user.activo ? 'on' : 'off'}`}
+                          onClick={async () => {
+                            const token = localStorage.getItem('auth-token')
+                            try {
+                              const { activo } = await toggleActivoUserRequest(user.id_usuario, token)
+                              setUsers((prev) =>
+                                prev.map((u) =>
+                                  u.id_usuario === user.id_usuario
+                                    ? { ...u, activo }
+                                    : u
+                                )
+                              )
+                            } catch (err) {
+                              alert(err.message)
+                            }
+                          }}
+                          aria-label={user.activo ? 'Desactivar usuario' : 'Activar usuario'}
+                        >
+                          <span className="toggle-track">
+                            <span className="toggle-dot" />
+                          </span>
+                        </button>
+                        <span className={`toggle-label ${user.activo ? 'active' : 'inactive'}`}>
+                          {user.activo ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
                     </td>
                   </tr>
                 ))}

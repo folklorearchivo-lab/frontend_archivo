@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Lock, Eye, EyeOff, X, Shield, Mail } from 'lucide-react'
 import { changePasswordRequest, updateProfileRequest } from '../services/api'
-import './pages/UsersManagement.css'
+import './ChangePasswordModal.css'
 
 // Misma regla que el backend (ver commonSchemas.js): mínimo 8 caracteres, al menos
 // una mayúscula y al menos un carácter especial.
@@ -120,8 +120,8 @@ const ChangePasswordModal = ({ isOpen, onClose, profile, onProfileUpdated }) => 
   }
 
   return (
-    <div className="modal-overlay-backdrop">
-      <div className="modal-box-card" style={{ maxWidth: '500px' }}>
+    <div className="modal-overlay-backdrop profile-modal">
+      <div className="modal-box-card">
         <div className="modal-box-header">
           <h2>Mi Perfil</h2>
           <button className="close-x-btn" onClick={onClose} aria-label="Cerrar modal">
@@ -141,13 +141,13 @@ const ChangePasswordModal = ({ isOpen, onClose, profile, onProfileUpdated }) => 
             </div>
           </div>
 
-          <h3 style={{ fontSize: '15px', fontWeight: 700, borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', margin: '0 0 16px 0' }}>Correo de Acceso</h3>
+          <h3 className="profile-section-title">Correo de Acceso</h3>
 
           {emailError && (
-            <div className="error-banner-group" style={{ marginBottom: '8px' }}>{emailError}</div>
+            <div className="error-banner-group">{emailError}</div>
           )}
           {emailSuccess && (
-            <div className="review-banner-alert success" style={{ marginBottom: '8px' }}>
+            <div className="review-banner-alert success">
               <div className="review-banner-text">
                 <strong>Correo actualizado</strong>
                 <p>{emailSuccess}</p>
@@ -158,7 +158,7 @@ const ChangePasswordModal = ({ isOpen, onClose, profile, onProfileUpdated }) => 
           <form onSubmit={handleEmailSubmit} style={{ marginBottom: '20px' }}>
             <div className="input-box-field">
               <label htmlFor="profile-email">Correo electrónico</label>
-              <div className="icon-input-container" style={{ position: 'relative' }}>
+              <div className="icon-input-container">
                 <Mail size={15} className="field-icon-left" />
                 <input
                   type="email"
@@ -168,24 +168,24 @@ const ChangePasswordModal = ({ isOpen, onClose, profile, onProfileUpdated }) => 
                   required
                 />
               </div>
-              <p style={{ marginTop: '6px', fontSize: '11px', color: '#807471' }}>
+              <p className="field-hint">
                 Solo puedes cambiar el correo una vez al mes.
               </p>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
               <button type="submit" className="btn-terracota" disabled={emailLoading}>
                 {emailLoading ? 'Guardando...' : 'Actualizar Correo'}
               </button>
             </div>
           </form>
 
-          <h3 style={{ fontSize: '15px', fontWeight: 700, borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', margin: '0 0 16px 0' }}>Cambiar Contraseña</h3>
+          <h3 className="profile-section-title">Cambiar Contraseña</h3>
 
           {error && (
-            <div className="error-banner-group" style={{ marginBottom: '8px' }}>{error}</div>
+            <div className="error-banner-group">{error}</div>
           )}
           {success && (
-            <div className="review-banner-alert success" style={{ marginBottom: '8px' }}>
+            <div className="review-banner-alert success">
               <div className="review-banner-text">
                 <strong>Contraseña actualizada</strong>
                 <p>{success}</p>
@@ -196,7 +196,7 @@ const ChangePasswordModal = ({ isOpen, onClose, profile, onProfileUpdated }) => 
           <form onSubmit={handleSubmit} id="change-password-form">
             <div className="input-box-field">
               <label htmlFor="current-password">Contraseña Actual <span className="req-star">*</span></label>
-              <div className="icon-input-container" style={{ position: 'relative' }}>
+              <div className="icon-input-container">
                 <Lock size={15} className="field-icon-left" />
                 <input
                   type={showCurrent ? 'text' : 'password'}
@@ -205,13 +205,11 @@ const ChangePasswordModal = ({ isOpen, onClose, profile, onProfileUpdated }) => 
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   required
-                  style={{ paddingRight: '40px' }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowCurrent(!showCurrent)}
-                  className="grid-action-btn"
-                  style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', zIndex: 2 }}
+                  className="visibility-toggle"
                   tabIndex={-1}
                 >
                   {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -221,7 +219,7 @@ const ChangePasswordModal = ({ isOpen, onClose, profile, onProfileUpdated }) => 
 
             <div className="input-box-field">
               <label htmlFor="new-password">Nueva Contraseña <span className="req-star">*</span></label>
-              <div className="icon-input-container" style={{ position: 'relative' }}>
+              <div className="icon-input-container">
                 <Lock size={15} className="field-icon-left" />
                 <input
                   type={showNew ? 'text' : 'password'}
@@ -230,26 +228,24 @@ const ChangePasswordModal = ({ isOpen, onClose, profile, onProfileUpdated }) => 
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  style={{ paddingRight: '40px' }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowNew(!showNew)}
-                  className="grid-action-btn"
-                  style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', zIndex: 2 }}
+                  className="visibility-toggle"
                   tabIndex={-1}
                 >
                   {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              <p style={{ marginTop: '6px', fontSize: '11px', color: '#807471' }}>
+              <p className="field-hint">
                 Mínimo 8 caracteres, con al menos una mayúscula y un carácter especial.
               </p>
             </div>
 
             <div className="input-box-field">
               <label htmlFor="confirm-password">Confirmar Nueva Contraseña <span className="req-star">*</span></label>
-              <div className="icon-input-container" style={{ position: 'relative' }}>
+              <div className="icon-input-container">
                 <Lock size={15} className="field-icon-left" />
                 <input
                   type={showConfirm ? 'text' : 'password'}
@@ -258,13 +254,11 @@ const ChangePasswordModal = ({ isOpen, onClose, profile, onProfileUpdated }) => 
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  style={{ paddingRight: '40px' }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="grid-action-btn"
-                  style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', zIndex: 2 }}
+                  className="visibility-toggle"
                   tabIndex={-1}
                 >
                   {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import PageHeader from '../PageHeader'
 import {
   Search,
   X,
@@ -156,29 +157,24 @@ const CultoresDirectory = () => {
 
   return (
     <div className="cultores-module-container">
-      {/* 1. Cabecera de la Sección */}
-      <header className="page-header">
-        <div className="breadcrumbs-title">
-          <nav className="breadcrumbs">
-            <span>ARCHIVO</span>
-            <span className="separator">&gt;</span>
-            <span className="current">DIRECTORIO DE CULTORES</span>
-          </nav>
-          <h1>Directorio de Cultores</h1>
-          <p className="cultor-subinfo text-light" style={{ fontSize: '14px', marginTop: '4px' }}>
-            Cultores aprobados e incorporados al patrimonio vivo del archivo regional.
-          </p>
-        </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'ARCHIVO' },
+          { label: 'DIRECTORIO DE CULTORES', active: true },
+        ]}
+        title="Directorio de Cultores"
+        description="Cultores aprobados e incorporados al patrimonio vivo del archivo regional."
+        actionButton={
+          <button className="ph-action-btn" onClick={() => setIsManualFormOpen(true)}>
+            <Plus size={16} />
+            <span>Ingreso Manual</span>
+          </button>
+        }
+      />
 
-        <button className="btn-terracota" onClick={() => setIsManualFormOpen(true)}>
-          <Plus size={16} />
-          <span>Ingreso Manual</span>
-        </button>
-      </header>
-
-      {/* 2. Barra unificada: píldoras de filtro (izquierda) + búsqueda (derecha) */}
-      <section className="filter-bar-card">
-        <div className="category-pills">
+      {/* 2. Barra de Filtros Premium */}
+      <section className="filter-bar-glass">
+        <div className="category-pills-glass">
           {[
             { id: 'todos', label: 'Todos' },
             { id: 'certificados', label: 'Certificados' },
@@ -186,7 +182,7 @@ const CultoresDirectory = () => {
           ].map((opcion) => (
             <button
               key={opcion.id}
-              className={`category-pill ${filtroCertificacion === opcion.id ? 'active' : ''}`}
+              className={`pill-glass ${filtroCertificacion === opcion.id ? 'active' : ''}`}
               onClick={() => setFiltroCertificacion(opcion.id)}
             >
               {opcion.label}
@@ -194,11 +190,11 @@ const CultoresDirectory = () => {
           ))}
         </div>
 
-        <div className="selectors-wrapper">
+        <div className="filter-controls-glass">
           <select
             value={filtroMunicipio}
             onChange={(e) => setFiltroMunicipio(e.target.value)}
-            className="filter-dropdown-select"
+            className="glass-select"
             aria-label="Filtrar por municipio"
           >
             <option value="">Todos los municipios</option>
@@ -209,7 +205,7 @@ const CultoresDirectory = () => {
           <select
             value={filtroParroquia}
             onChange={(e) => setFiltroParroquia(e.target.value)}
-            className="filter-dropdown-select"
+            className="glass-select"
             disabled={!filtroMunicipio}
             aria-label="Filtrar por parroquia"
           >
@@ -220,18 +216,18 @@ const CultoresDirectory = () => {
           </select>
         </div>
 
-        <div className="search-input-wrapper">
-          <Search className="search-input-icon" size={16} />
+        <div className="glass-search-wrapper">
+          <Search className="glass-search-icon" size={16} />
           <input
             type="text"
-            placeholder="Buscar por nombre o correo..."
+            placeholder="Buscar por nombre o cédula..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="clear-search-icon-btn"
+              className="glass-clear-btn"
               aria-label="Limpiar búsqueda"
             >
               <X size={14} />
@@ -250,7 +246,6 @@ const CultoresDirectory = () => {
                 <th>CÉDULA</th>
                 <th>CORREO DE CONTACTO</th>
                 <th>TELÉFONO</th>
-                <th>ESTADO</th>
                 <th>FE DE VIDA</th>
                 <th className="text-right">ACCIONES</th>
               </tr>
@@ -258,7 +253,7 @@ const CultoresDirectory = () => {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="7">
+                  <td colSpan="6">
                     <div className="empty-grid-state">
                       <p className="empty-grid-title">Cargando directorio...</p>
                     </div>
@@ -266,7 +261,7 @@ const CultoresDirectory = () => {
                 </tr>
               ) : loadError ? (
                 <tr>
-                  <td colSpan="7">
+                  <td colSpan="6">
                     <div className="empty-grid-state">
                       <p className="empty-grid-title">No se pudo cargar el directorio</p>
                       <p className="empty-grid-desc">{loadError}</p>
@@ -302,64 +297,27 @@ const CultoresDirectory = () => {
                       <span className="cultor-subinfo">{cultor.telefono_contacto || '—'}</span>
                     </td>
                     <td>
-                      <button
-                        className={`status-toggle-btn ${cultor.usuario?.activo ? 'active' : 'inactive'}`}
-                        onClick={async () => {
-                          const token = localStorage.getItem('auth-token')
-                          try {
-                            const { activo } = await toggleActivoCultorRequest(cultor.id_cultor, token)
-                            setCultores((prev) =>
-                              prev.map((c) =>
-                                c.id_cultor === cultor.id_cultor
-                                  ? { ...c, usuario: { ...c.usuario, activo } }
-                                  : c
-                              )
-                            )
-                          } catch (err) {
-                            alert(err.message)
-                          }
-                        }}
-                        title={cultor.usuario?.activo ? 'Desactivar cultor' : 'Activar cultor'}
-                      >
-                        <span className="status-dot" />
-                        <span>{cultor.usuario?.activo ? 'Activo' : 'Inactivo'}</span>
-                      </button>
-                    </td>
-                    <td>
                       {(() => {
                         const registro = feDeVidaActual(cultor)
                         const estatus = registro?.estatus_confirmado || ''
-                        const etiquetas = { activo: 'Miembro Activo', honorario: 'Miembro Honorario' }
                         return (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <span
-                              className={`v-badge ${estatus === 'activo' ? 'aprobado' : ''}`}
-                              style={!estatus ? { color: 'var(--text-secondary)', background: 'transparent', border: '1px solid var(--border-color)' } : estatus === 'honorario' ? { background: '#f4e3b2', color: '#7a5c00', border: 'none' } : undefined}
-                            >
-                              {etiquetas[estatus] || 'Sin Registrar'}
-                            </span>
-                            {/* Select controlado por el estatus actual: siempre editable, incluso
-                                después de haber elegido una opción (antes quedaba fijo en "Registrar..."
-                                y parecía bloqueado para volver a cambiarlo). */}
-                            <select
-                              value={estatus}
-                              onChange={(e) => handleCambiarFeDeVida(cultor, e.target.value)}
-                              className="filter-dropdown-select"
-                              style={{ fontSize: '11px', padding: '4px 6px' }}
-                              aria-label="Modificar fe de vida"
-                            >
-                              {!estatus && <option value="" disabled>Registrar...</option>}
-                              <option value="activo">Miembro Activo</option>
-                              <option value="honorario">Miembro Honorario</option>
-                            </select>
-                          </div>
+                          <select
+                            value={estatus}
+                            onChange={(e) => handleCambiarFeDeVida(cultor, e.target.value)}
+                            className={`fede-vida-select ${estatus || 'sin-registrar'}`}
+                            aria-label="Estado de fe de vida"
+                          >
+                            {!estatus && <option value="" disabled>Sin Registrar</option>}
+                            <option value="activo">Miembro Activo</option>
+                            <option value="honorario">Miembro Honorario</option>
+                          </select>
                         )
                       })()}
                     </td>
                     <td className="text-right">
-                      <div className="grid-actions-row">
+                      <div className="action-icons-row">
                         <button
-                          className="grid-action-btn"
+                          className="action-icon-btn"
                           title="Ver Expediente"
                           onClick={() => {
                             setCultorSeleccionado(cultor)
@@ -369,7 +327,7 @@ const CultoresDirectory = () => {
                           <FolderOpen size={16} />
                         </button>
                         <button
-                          className="grid-action-btn"
+                          className="action-icon-btn"
                           title="Editar Expediente"
                           onClick={() => {
                             setCultorAEditar(cultor)
@@ -386,7 +344,7 @@ const CultoresDirectory = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7">
+                  <td colSpan="6">
                     <div className="empty-grid-state">
                       <User size={40} />
                       <p className="empty-grid-title">No se encontraron cultores</p>

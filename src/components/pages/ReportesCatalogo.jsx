@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
+import PageHeader from '../PageHeader'
 import {
   Search,
   FileText,
@@ -214,20 +215,14 @@ const ReportesCatalogo = () => {
 
   return (
     <div className="reportes-module-container">
-      {/* 1. Cabecera de la Sección */}
-      <header className="page-header">
-        <div className="breadcrumbs-title">
-          <nav className="breadcrumbs">
-            <span>ARCHIVO</span>
-            <span className="separator">&gt;</span>
-            <span className="current">REPORTES Y CATÁLOGO</span>
-          </nav>
-          <h1>Reportes y Catálogo Digital</h1>
-          <p className="cultor-subinfo text-light" style={{ fontSize: '14px', marginTop: '4px' }}>
-            Análisis estadístico del patrimonio y exportación de catálogos para investigadores.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'ARCHIVO' },
+          { label: 'REPORTES Y CATÁLOGO', active: true },
+        ]}
+        title="Reportes y Catálogo Digital"
+        description="Análisis estadístico del patrimonio y exportación de catálogos para investigadores."
+      />
 
       {isLoading && (
         <div className="charts-loading-state">

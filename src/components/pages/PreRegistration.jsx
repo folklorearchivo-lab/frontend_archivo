@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import PageHeader from '../PageHeader'
 import {
   Search,
   X,
@@ -112,6 +113,15 @@ const PreRegistration = () => {
   }
 
   useEffect(() => {
+    const tab = sessionStorage.getItem('prereg-tab')
+    if (tab === 'obras') {
+      setActiveTab('obras')
+      sessionStorage.removeItem('prereg-tab')
+    }
+  }, [])
+
+  useEffect(() => {
+    setSearchQuery('')
     setSearchQuery('')
     if (activeTab === 'cultores') {
       cargarPostulaciones()
@@ -238,20 +248,14 @@ const PreRegistration = () => {
 
   return (
     <div className="prereg-module-container">
-      {/* 1. Cabecera de la Sección */}
-      <header className="page-header">
-        <div className="breadcrumbs-title">
-          <nav className="breadcrumbs">
-            <span>ARCHIVO</span>
-            <span className="separator">&gt;</span>
-            <span className="current">SOLICITUDES DE REGISTRO</span>
-          </nav>
-          <h1>Solicitudes de Registro</h1>
-          <p className="cultor-subinfo text-light" style={{ fontSize: '14px', marginTop: '4px' }}>
-            Postulaciones de cultores y obras recibidas desde la web pública, pendientes de validación.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'ARCHIVO' },
+          { label: 'SOLICITUDES DE REGISTRO', active: true },
+        ]}
+        title="Solicitudes de Registro"
+        description="Postulaciones de cultores y obras recibidas desde la web pública, pendientes de validación."
+      />
 
       {actionError && (
         <div className="error-banner-group" style={{ marginBottom: '16px' }}>

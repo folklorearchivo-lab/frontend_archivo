@@ -444,6 +444,60 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* ── Botones de acción (aprobación/rechazo) ── */
+.prereg-module-container .btn-approve,
+.prereg-module-container .btn-reject {
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.prereg-module-container .btn-approve {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.prereg-module-container .btn-approve:hover {
+  background-color: #059669;
+}
+
+.prereg-module-container .btn-reject {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.prereg-module-container .btn-reject:hover {
+  background-color: #dc2626;
+}
+
+/* ── Botón secundario para modales ── */
+.prereg-module-container .btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  background-color: #fbfbfa;
+  border: 1px solid #d8d7d3;
+  color: #736b68;
+  transition: all 0.2s ease;
+}
+
+.prereg-module-container .btn-secondary:hover {
+  background-color: #f0efea;
+  border-color: #a39996;
+  color: #2d1e1b;
+}
+
 /* Responsive Overrides */
 @media (max-width: 900px) {
   .prereg-module-container .filter-bar-card {
