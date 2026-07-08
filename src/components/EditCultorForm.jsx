@@ -206,7 +206,7 @@ function EditCultorForm({ isOpen, onClose, cultor, onSuccess }) {
                   </div>
                 </div>
 
-                <DateInput label="Fecha de nacimiento" name="fecha_nacimiento" value={form.fecha_nacimiento} onChange={handleChange} />
+                <DateInput label="Fecha de nacimiento" name="fecha_nacimiento" value={form.fecha_nacimiento} onChange={handleChange} min="1900-01-01" max={new Date().toISOString().split('T')[0]} />
                 <SelectInput label="Género" name="genero" value={form.genero} onChange={handleChange} options={generos} />
                 <SelectInput label="Municipio de residencia" name="municipio" value={municipioSeleccionado} onChange={handleChange} options={municipiosList.map((m) => ({ value: String(m.id_municipio), label: m.nombre }))} />
                 <SelectInput label="Parroquia de residencia" name="id_parroquia" value={form.id_parroquia} onChange={handleChange} options={parroquias.map((p) => ({ value: String(p.id_parroquia), label: p.nombre }))} disabled={!municipioSeleccionado || parroquias.length === 0} />

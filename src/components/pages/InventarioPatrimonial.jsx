@@ -52,6 +52,7 @@ const InventarioPatrimonial = () => {
 
   const [isStandaloneCategoryModalOpen, setIsStandaloneCategoryModalOpen] = useState(false)
   const [standaloneCategoryName, setStandaloneCategoryName] = useState('')
+  const [standaloneCategoryDescripcion, setStandaloneCategoryDescripcion] = useState('')
 
   useEffect(() => {
     cargarDatos()
@@ -88,7 +89,7 @@ const InventarioPatrimonial = () => {
   const handleAddCategory = async () => {
     if (customCategory.trim()) {
       try {
-        const nuevaCat = await createCategoriaRequest(customCategory.trim(), token)
+        const nuevaCat = await createCategoriaRequest(customCategory.trim(), null, token)
         setCategoriesList(prev => [...prev, nuevaCat])
         setNewPieceCategory(nuevaCat.id_categoria)
       } catch (err) {
@@ -233,13 +234,17 @@ const InventarioPatrimonial = () => {
     }
 
     const selectedCultor = cultoresList.find(c => String(c.id_cultor) === String(newPieceAuthor))
+    // La web pública (Gallery.jsx, Eventos.jsx, etc.) muestra tipo_patrimonio como si
+    // fuera la categoría de la obra — así que aquí se sincroniza con el nombre real de
+    // la categoría elegida, en vez de mandar un valor fijo que no tenía relación con ella.
+    const categoriaSeleccionada = categoriesList.find(c => String(c.id_categoria) === String(newPieceCategory))
 
     const payload = {
       titulo: newPieceName.trim(),
       id_cultor: newPieceAuthor ? parseInt(newPieceAuthor, 10) : null,
       id_categoria: newPieceCategory ? parseInt(newPieceCategory, 10) : null,
       id_parroquia: selectedCultor ? selectedCultor.id_parroquia : null,
-      tipo_patrimonio: 'Material Mueble',
+      tipo_patrimonio: categoriaSeleccionada?.nombre || null,
       materiales_utilizados: newPieceMaterials.trim() || 'No especificados',
       estado_conservacion: newPieceConservation,
       ubicacion_actual: newPieceLocation
@@ -953,9 +958,9 @@ const InventarioPatrimonial = () => {
                 <label htmlFor="standalone-category-name">Nombre de la Categoría <span className="req-star">*</span></label>
                 <div className="icon-input-container">
                   <FolderOpen size={15} className="field-icon-left" />
-                  <input 
-                    type="text" 
-                    id="standalone-category-name" 
+                  <input
+                    type="text"
+                    id="standalone-category-name"
                     placeholder="Ej. Fotografía Histórica"
                     value={standaloneCategoryName}
                     onChange={(e) => setStandaloneCategoryName(e.target.value)}
@@ -963,24 +968,37 @@ const InventarioPatrimonial = () => {
                   />
                 </div>
               </div>
+              <div className="input-box-field" style={{ marginTop: '16px' }}>
+                <label htmlFor="standalone-category-descripcion">Descripción</label>
+                <div className="icon-input-container">
+                  <textarea
+                    id="standalone-category-descripcion"
+                    placeholder="Breve descripción de la categoría (opcional)"
+                    value={standaloneCategoryDescripcion}
+                    onChange={(e) => setStandaloneCategoryDescripcion(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              </div>
             </div>
             <div className="modal-box-footer">
-              <button type="button" className="btn-secondary" onClick={() => { setIsStandaloneCategoryModalOpen(false); setStandaloneCategoryName(''); }}>
+              <button type="button" className="btn-secondary" onClick={() => { setIsStandaloneCategoryModalOpen(false); setStandaloneCategoryName(''); setStandaloneCategoryDescripcion(''); }}>
                 Cancelar
               </button>
-              <button 
-                type="button" 
-                className="btn-terracota" 
+              <button
+                type="button"
+                className="btn-terracota"
                 onClick={async () => {
                   if (standaloneCategoryName.trim()) {
                     try {
-                      const nuevaCat = await createCategoriaRequest(standaloneCategoryName.trim(), token);
+                      const nuevaCat = await createCategoriaRequest(standaloneCategoryName.trim(), standaloneCategoryDescripcion.trim(), token);
                       setCategoriesList([...categoriesList, nuevaCat]);
                     } catch (err) {
                       showAlert('Error al crear categoría: ' + err.message);
                     }
                   }
                   setStandaloneCategoryName('');
+                  setStandaloneCategoryDescripcion('');
                   setIsStandaloneCategoryModalOpen(false);
                 }}
               >

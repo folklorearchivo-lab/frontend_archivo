@@ -7,7 +7,7 @@ import Textarea from './form/Textarea'
 import Dropzone from './form/Dropzone'
 import Checkbox from './form/Checkbox'
 import Radio from './form/Radio'
-import { ingresoManualCultorRequest, subirCedulaCultorRequest, subirDocumentosSoporteRequest, validarCedulaRequest, getParroquiasByMunicipioRequest, getMunicipiosRequest, getOficiosRequest } from '../services/api'
+import { ingresoManualCultorRequest, validarCedulaRequest, getParroquiasByMunicipioRequest, getMunicipiosRequest, getOficiosRequest } from '../services/api'
 import { enviarCredenciales } from '../services/emailNotifications'
 
 // Copia adaptada de RegisterForm.jsx (vite-project, web pública), mismos campos —
@@ -89,7 +89,6 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
   const [enviado, setEnviado] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
-  const [documentoUploadError, setDocumentoUploadError] = useState('')
   const [ocrErrores, setOcrErrores] = useState({})
   const [datosOcr, setDatosOcr] = useState(null)
 
@@ -241,8 +240,22 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
   const handleSubmit = async (event) => {
     event.preventDefault()
     setSubmitError('')
-    setDocumentoUploadError('')
     setOcrErrores({})
+
+    // Validación manual de obligatorios: el formulario usa noValidate porque el modal
+    // tiene scroll propio y el aviso nativo del navegador ("completa este campo") puede
+    // quedar fuera de la vista, dando la impresión de que el botón "no hace nada".
+    const camposFaltantes = []
+    if (!form.primer_nombre.trim()) camposFaltantes.push('Primer nombre')
+    if (!form.primer_apellido.trim()) camposFaltantes.push('Primer apellido')
+    if (!cedulaNumero) camposFaltantes.push('Número de cédula')
+    if (!form.fecha_nacimiento) camposFaltantes.push('Fecha de nacimiento')
+    if (!camposVisuales.municipio) camposFaltantes.push('Municipio de residencia')
+    if (!form.correo_contacto.trim()) camposFaltantes.push('Correo electrónico')
+    if (camposFaltantes.length > 0) {
+      setSubmitError(`Completa los siguientes campos obligatorios: ${camposFaltantes.join(', ')}.`)
+      return
+    }
 
     // Bloqueante en el frontend: sin documento de cédula no se puede validar la
     // identidad del cultor.
@@ -277,43 +290,24 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
       // Solo se envían los campos que existen como columna real en `cultores`.
       // Los opcionales (ej. correo_contacto, id_parroquia) se omiten si quedaron vacíos:
       // el backend valida formato/tipo cuando el campo SÍ viene presente, aunque sea opcional.
-      const payload = {
-        ...Object.fromEntries(
-          Object.entries(form).filter(([, valor]) => valor !== '')
-        ),
-        // Ensamblados aquí en el formato exacto que exige el backend (V-12345678 /
-        // 0414-1234567), a partir del prefijo seleccionado + los dígitos escritos.
-        cedula: `${cedulaPrefijo}-${cedulaNumero}`,
-        // Estado booleano aparte: nunca debe viajar como string ('true'/'false'),
-        // el backend lo valida estrictamente como boolean.
-        esta_certificado: estaCertificado,
-      }
+      // Se manda todo junto (datos + cédula + soportes) en UNA petición multipart: el
+      // backend crea el cultor SOLO si todos los documentos adjuntados se guardan
+      // correctamente (todo o nada, ver cultoresController.ingresoManual). Ya no existe
+      // un estado intermedio de "registro creado pero sin documento".
+      const formData = new FormData()
+      Object.entries(form).forEach(([campo, valor]) => {
+        if (valor !== '') formData.append(campo, valor)
+      })
+      formData.append('cedula', `${cedulaPrefijo}-${cedulaNumero}`)
+      formData.append('esta_certificado', estaCertificado)
       if (telefonoNumero) {
-        payload.telefono_contacto = `${telefonoPrefijo}-${telefonoNumero}`
+        formData.append('telefono_contacto', `${telefonoPrefijo}-${telefonoNumero}`)
       }
+      formData.append('archivo_cedula', archivo)
+      archivos.forEach((soporte) => formData.append('archivos_soporte', soporte))
 
       const token = localStorage.getItem('auth-token')
-      const respuesta = await ingresoManualCultorRequest(payload, token)
-
-      // El cultor ya quedó creado en la BD en este punto (ya pasó la validación OCR
-      // arriba). La subida del documento es un segundo paso, encadenado con el
-      // id_cultor real que recién devolvió el backend — si esta parte falla por una
-      // razón ajena a la validez de la imagen (ej. Cloudinary caído), el registro del
-      // cultor no se revierte, solo se le avisa al admin para que suba el documento
-      // más tarde.
-      try {
-        await subirCedulaCultorRequest(respuesta.id_cultor, archivo, token)
-      } catch {
-        setDocumentoUploadError('Registro creado con éxito, pero hubo un error al cargar el documento de identidad.')
-      }
-
-      if (archivos.length > 0) {
-        try {
-          await subirDocumentosSoporteRequest(respuesta.id_cultor, archivos, token)
-        } catch {
-          setDocumentoUploadError(prev => prev ? prev + ' Además, no se pudieron subir los documentos de soporte.' : 'Registro creado con éxito, pero hubo un error al subir los documentos de soporte.')
-        }
-      }
+      const respuesta = await ingresoManualCultorRequest(formData, token)
 
       // Guardar credenciales ANTES de resetear el formulario, para mostrarlas
       // en el modal de éxito (el admin las ve y copia siempre, no solo si falla
@@ -347,11 +341,13 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
         // Silencioso: las credenciales ya están en pantalla
       }
     } catch (error) {
-      // El backend también responde 400 cuando falta correo_contacto (mensaje propio,
-      // ya es amigable) — solo se traduce el 400 de restricción única (cédula/correo
-      // duplicados), que llega como un error genérico de Sequelize, no como mensaje propio.
+      // El backend también responde 400 cuando falta correo_contacto o el archivo de
+      // cédula (mensajes propios, ya amigables) — solo se traduce el 400 de restricción
+      // única (cédula/correo duplicados), que llega como un error genérico de Sequelize,
+      // no como mensaje propio.
       const esFaltaCorreo = error.message?.includes('requiere correo_contacto')
-      const esDuplicado = error.cause?.response?.status === 400 && !esFaltaCorreo
+      const esFaltaCedula = error.message?.includes('documento de la cédula') || error.message?.includes('documento de identidad')
+      const esDuplicado = error.cause?.response?.status === 400 && !esFaltaCorreo && !esFaltaCedula
       setSubmitError(
         esDuplicado
           ? 'Los datos ingresados (cédula o correo) ya se encuentran registrados en el sistema.'
@@ -393,7 +389,7 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
         </div>
 
         <div className="mt-10">
-          <form onSubmit={handleSubmit} className="space-y-14">
+          <form onSubmit={handleSubmit} noValidate className="space-y-14">
           {/* Sección I: Datos Personales */}
           <div className="space-y-0">
             <SectionTitle>I. Datos Personales</SectionTitle>
@@ -473,6 +469,8 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
                 required
                 value={form.fecha_nacimiento}
                 onChange={handleChange}
+                min="1900-01-01"
+                max={new Date().toISOString().split('T')[0]}
               />
               <SelectInput
                 label="Género"
@@ -801,15 +799,9 @@ function ManualCultorForm({ isOpen, onClose, onSuccess }) {
             </div>
           )}
 
-          {documentoUploadError && (
-            <p className="mt-4 rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-left font-sans text-sm text-amber-800">
-              {documentoUploadError}
-            </p>
-          )}
-
           <button
             type="button"
-            onClick={() => { setEnviado(false); setDocumentoUploadError(''); setCredencialesRegistro(null) }}
+            onClick={() => { setEnviado(false); setCredencialesRegistro(null) }}
             className="mt-8 w-full rounded-full bg-cafe-noir px-6 py-3 font-sans text-sm font-semibold uppercase tracking-wider text-white shadow-md transition-opacity hover:opacity-80"
           >
             Aceptar

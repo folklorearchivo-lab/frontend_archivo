@@ -13,7 +13,7 @@ import {
   getObrasAdminRequest,
   exportarCultoresPdfRequest,
   exportarCultoresExcelRequest,
-  exportarObrasCsvRequest,
+  exportarCultoresPorRegionExcelRequest,
   exportarObrasPorMunicipioExcelRequest,
   exportarCatalogoConsolidadoRequest,
   exportarFichaCultorRequest,
@@ -417,7 +417,7 @@ const ReportesCatalogo = () => {
             <button
               className="btn-export-excel"
               disabled={isDownloading.excel}
-              onClick={() => handleExportFile('excel', 'inventario_obras.xlsx', exportarObrasCsvRequest)}
+              onClick={() => handleExportFile('excel', 'cultores_por_region.xlsx', exportarCultoresPorRegionExcelRequest)}
             >
               <FileText size={18} />
               <span>{isDownloading.excel ? 'Generando Excel...' : 'Descargar Excel de Registro por Región'}</span>

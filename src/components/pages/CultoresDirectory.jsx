@@ -328,7 +328,9 @@ const CultoresDirectory = () => {
                         }}
                       >
                         <div className="cultor-avatar-badge">
-                          {getInitials(cultor)}
+                          {cultor.foto_perfil
+                            ? <img src={cultor.foto_perfil} alt={nombreCompleto(cultor)} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                            : getInitials(cultor)}
                         </div>
                         <span className="cultor-display-name">
                           {nombreCompleto(cultor)}
@@ -447,14 +449,16 @@ const CultoresDirectory = () => {
             <div className="modal-box-body">
               <div className="dossier-profile-header">
                 <div className="dossier-avatar">
-                  {getInitials(cultorSeleccionado)}
+                  {cultorSeleccionado.foto_perfil
+                    ? <img src={cultorSeleccionado.foto_perfil} alt={nombreCompleto(cultorSeleccionado)} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                    : getInitials(cultorSeleccionado)}
                 </div>
                 <div className="dossier-profile-meta">
                   <h3>{nombreCompleto(cultorSeleccionado)}</h3>
                   <span className="dossier-sub">{cultorSeleccionado.cedula || 'Sin cédula registrada'}</span>
                 </div>
                 <div className="dossier-v-status">
-                  <span className="v-badge aprobado">APROBADO</span>
+                  <span className={`v-badge ${cultorSeleccionado.estatus || 'aprobado'}`}>{cultorSeleccionado.estatus?.toUpperCase() || '—'}</span>
                 </div>
               </div>
 

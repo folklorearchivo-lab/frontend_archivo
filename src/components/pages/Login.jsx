@@ -9,6 +9,14 @@ import './Login.css'
 import { loginRequest, getConfiguracionWebRequest } from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 
+const equipoDesarrollo = [
+  'Julieth Andrade',
+  'Kimberly Cegarra',
+  'Yilbert Torres',
+  'Maria Escalante',
+  'Lizmar Cruz',
+]
+
 const Login = ({ onLoginSuccess }) => {
   const { showToast } = useToast()
   const [email, setEmail] = useState('')
@@ -71,6 +79,22 @@ const Login = ({ onLoginSuccess }) => {
         <p className="relative z-10 text-[10px] font-bold tracking-[2.5px] text-white/50 uppercase m-0">
           {configWeb?.login_bottom_label || 'Sistema de Gestión y Control Patrimonial'}
         </p>
+
+        <div className="relative z-10 mt-4">
+          <p className="text-[12px] font-bold uppercase tracking-[1.5px] text-white/80 m-0">
+            Realizado por
+          </p>
+          <p className="text-[11px] italic text-white/65 m-0 mt-1 mb-2">
+            Estudiantes De la UNEFA - Carrera Ing. De Sistemas
+          </p>
+          <ul className="m-0 flex flex-col gap-1 p-0 list-none">
+            {equipoDesarrollo.map((nombre) => (
+              <li key={nombre} className="text-[12.5px] font-medium text-white/90">
+                {nombre}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       {/* Right Login Panel */}
@@ -171,11 +195,6 @@ const Login = ({ onLoginSuccess }) => {
       <div className="flex flex-col items-center gap-1 px-4 sm:px-8 lg:px-12 pb-6 sm:pb-8 lg:pb-12 shrink-0">
         <p className="text-[11px] text-[rgba(40,27,24,0.4)] m-0 text-center break-words max-w-full">
           © 2024 Archivo Regional de Folklore. Reservados todos los derechos.
-        </p>
-        <p className="text-[10px] italic text-[rgba(40,27,24,0.3)] m-0 text-center leading-[1.5] break-words max-w-full">
-          Realizado por: Estudiantes de la UNEFA de la carrera Ing. de Sistemas
-          <br />
-          Julieth Andrade, Kimberly Cegarra, Yilbert Torres, Maria Escalante, Lizmar Cruz
         </p>
       </div>
       </div>

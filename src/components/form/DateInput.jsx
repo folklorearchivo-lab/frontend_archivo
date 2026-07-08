@@ -1,4 +1,4 @@
-function DateInput({ label, name, required = false, value, onChange }) {
+function DateInput({ label, name, required = false, value, onChange, min, max }) {
   return (
     <label className="flex flex-col gap-2">
       <span className="font-sans text-xs font-semibold uppercase tracking-wide text-cafe-noir">
@@ -12,6 +12,8 @@ function DateInput({ label, name, required = false, value, onChange }) {
           required={required}
           value={value}
           onChange={onChange}
+          min={min}
+          max={max}
           className="date-input-full-click"
         />
         <svg
@@ -47,11 +49,6 @@ function DateInput({ label, name, required = false, value, onChange }) {
           box-shadow: 0 0 0 1px #5C3A1E;
         }
         .date-input-full-click::-webkit-calendar-picker-indicator {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: 100%;
           opacity: 0;
           cursor: pointer;
         }

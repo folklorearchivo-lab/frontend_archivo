@@ -103,7 +103,10 @@ export async function forgotPasswordRequest(correo) {
 // desde el frontend (ver ForgotPassword.jsx).
 export async function olvidePasswordRequest(correo) {
   try {
-    const response = await axios.post(`${API_URL}/auth/olvide-password`, { correo })
+    // Este panel solo recupera cuentas que no sean de cultor (mismo criterio que
+    // loginRequest) — así no se toca por error la cuenta de cultor de alguien que
+    // comparte el mismo correo con su cuenta de administrador.
+    const response = await axios.post(`${API_URL}/auth/olvide-password`, { correo, portal: 'admin' })
     return response.data
   } catch (error) {
     const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al solicitar recuperación'
@@ -376,11 +379,12 @@ export async function getCategoriasRequest() {
   }
 }
 
-// Crear una nueva categoría de obra (Administrativo)
-export async function createCategoriaRequest(nombre_categoria, token) {
+// Crear una nueva categoría de obra (Administrativo). Los nombres de estos campos
+// coinciden exactamente con las columnas del modelo CategoriasObra (nombre, descripcion).
+export async function createCategoriaRequest(nombre, descripcion, token) {
   exigirToken(token)
   try {
-    const response = await axios.post(`${API_URL}/categorias_obra`, { nombre_categoria }, {
+    const response = await axios.post(`${API_URL}/categorias_obra`, { nombre, descripcion: descripcion || null }, {
       headers: { Authorization: `Bearer ${token}` }
     })
     return response.data
@@ -707,6 +711,10 @@ export function exportarCultoresPdfRequest(token) {
 
 export function exportarCultoresExcelRequest(token) {
   return descargarArchivoRequest('/dashboard/exportar/cultores-excel', token, 'reporte_cultores_registrados.xlsx')
+}
+
+export function exportarCultoresPorRegionExcelRequest(token) {
+  return descargarArchivoRequest('/dashboard/exportar/cultores-por-region-excel', token, 'cultores_por_region.xlsx')
 }
 
 export function exportarObrasCsvRequest(token) {

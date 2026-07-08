@@ -544,7 +544,7 @@ const PreRegistration = () => {
                   <span className="dossier-sub">{registroSeleccionado.cedula || 'Sin cédula registrada'}</span>
                 </div>
                 <div className="dossier-v-status">
-                  <span className="v-badge pendiente">PENDIENTE</span>
+                  <span className={`v-badge ${registroSeleccionado.estatus || 'pendiente'}`}>{registroSeleccionado.estatus?.toUpperCase() || '—'}</span>
                 </div>
               </div>
 
@@ -587,7 +587,7 @@ const PreRegistration = () => {
                 </div>
                 <div className="dossier-field">
                   <span className="dossier-label">Estatus de Vida:</span>
-                  <span className="dossier-value">{registroSeleccionado.estatus_vida || '—'}</span>
+                  <span className="dossier-value">{registroSeleccionado.estatus_vida || 'Activo'}</span>
                 </div>
                 <div className="dossier-field">
                   <span className="dossier-label">Fecha de Postulación:</span>
