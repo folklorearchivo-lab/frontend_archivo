@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import {
   Eye,
   EyeOff,
-  ArrowRight,
-  Landmark
+  ArrowRight
 } from 'lucide-react'
 import './Login.css'
+import logoM from '../../assets/LogoM.png'
 import { loginRequest, getConfiguracionWebRequest } from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 
@@ -64,8 +64,8 @@ const Login = ({ onLoginSuccess }) => {
         </span>
 
         <div className="relative z-10 flex flex-col items-start max-w-[520px]">
-          <div className="w-14 h-14 rounded-xl bg-white/8 border border-white/15 flex items-center justify-center mb-6 text-white">
-            <Landmark size={28} />
+          <div className="w-20 h-20 rounded-xl bg-white/8 border border-white/15 flex items-center justify-center mb-6 text-white overflow-hidden p-1">
+            <img src={logoM} alt="Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-[32px] sm:text-[38px] font-bold leading-[1.15] tracking-[-0.8px] text-white mb-3">
             {configWeb?.login_titulo || 'Archivo Regional de Folklore'}

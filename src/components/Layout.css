@@ -613,7 +613,7 @@ body {
   box-shadow: 0 4px 20px rgba(93, 64, 55, 0.04);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
 }
 
 .search-bar {

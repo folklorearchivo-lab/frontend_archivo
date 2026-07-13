@@ -43,6 +43,7 @@ const ConfiguracionPortal = () => {
     contacto_email: '',
     contacto_telefono: '',
     contacto_direccion: '',
+    contacto_horario: '',
     hero_imagen: '',
     about_imagen: '',
     login_titulo: '',
@@ -143,6 +144,7 @@ const ConfiguracionPortal = () => {
           contacto_email: data.contacto_email || '',
           contacto_telefono: data.contacto_telefono || '',
           contacto_direccion: data.contacto_direccion || '',
+          contacto_horario: data.contacto_horario || '',
           hero_imagen: data.hero_imagen || '',
           about_imagen: data.about_imagen || '',
           login_titulo: data.login_titulo || 'Inicio de Sesión',
@@ -194,6 +196,7 @@ const ConfiguracionPortal = () => {
       formData.append('contacto_email', configWeb.contacto_email)
       formData.append('contacto_telefono', configWeb.contacto_telefono)
       formData.append('contacto_direccion', configWeb.contacto_direccion)
+      formData.append('contacto_horario', configWeb.contacto_horario)
       formData.append('login_titulo', configWeb.login_titulo)
       formData.append('login_subtitulo', configWeb.login_subtitulo)
       formData.append('login_top_label', configWeb.login_top_label)
@@ -594,6 +597,18 @@ const ConfiguracionPortal = () => {
                           value={configWeb.contacto_direccion}
                           onChange={(e) => setConfigWeb({...configWeb, contacto_direccion: e.target.value})}
                           placeholder="Dirección física"
+                          maxLength={120}
+                        />
+                      </div>
+
+                      <div className="contact-field">
+                        <CalendarDays size={16} className="contact-field-icon" />
+                        <input
+                          type="text"
+                          name="contacto_horario"
+                          value={configWeb.contacto_horario}
+                          onChange={(e) => setConfigWeb({...configWeb, contacto_horario: e.target.value})}
+                          placeholder="Horarios de atención"
                           maxLength={120}
                         />
                       </div>

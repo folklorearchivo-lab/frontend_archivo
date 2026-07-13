@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
 import {
-  Calendar,
   Bell,
   LayoutDashboard,
   UserCheck,
@@ -319,9 +318,6 @@ const Layout = ({ children, currentView, onViewChange, onLogout }) => {
           </button>
 
           <div className="topbar-actions" style={{ marginLeft: 'auto' }}>
-            <button className="icon-btn" aria-label="Calendario">
-              <Calendar size={18} />
-            </button>
             <div style={{ position: 'relative' }} ref={notifRef}>
               <button className="icon-btn" aria-label="Notificaciones" onClick={toggleNotificaciones}>
                 <Bell size={18} />
