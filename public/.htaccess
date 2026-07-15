@@ -1,6 +1,14 @@
 RewriteEngine On
 RewriteBase /
 
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
+# Handle API and backend routes - let them pass through
+RewriteCond %{REQUEST_URI} ^/api
+RewriteRule ^ - [L]
+
+# Serve existing files and directories directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Everything else goes to index.html (SPA fallback)
+RewriteRule ^ /index.html [L]
