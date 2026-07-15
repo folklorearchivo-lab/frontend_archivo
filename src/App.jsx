@@ -36,16 +36,16 @@ function App() {
     setIsAuthenticated(false)
   }
 
-  // Sin router: "rutas" resueltas manualmente por pathname, mismo enfoque que ya
-  // usaba este archivo para leer ?token= en la URL. Cada navegación entre estas
-  // vistas es una recarga completa (<a href>, window.location.href), no SPA.
-  const pathname = window.location.pathname
+  // Sin router: "rutas" resueltas manualmente por hash (#/olvide-password, etc.).
+  // Cada navegación entre estas vistas es una recarga completa (<a href>,
+  // window.location.href), no SPA.
+  const hash = window.location.hash.slice(1) || '/'
 
   return (
     <ToastProvider>
-      {pathname === '/recuperar-password' ? (
+      {hash.startsWith('/recuperar-password') ? (
         <ResetPassword />
-      ) : pathname === '/olvide-password' ? (
+      ) : hash.startsWith('/olvide-password') ? (
         <ForgotPassword onBack={() => { window.location.href = '/' }} />
       ) : !isAuthenticated ? (
         <Login onLoginSuccess={handleLogin} />

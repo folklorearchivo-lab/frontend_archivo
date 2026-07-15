@@ -7,7 +7,7 @@ import { resetPasswordRequest } from '../../services/api'
 // confirma el cambio de contraseña y devuelve a la raíz, donde el Login real maneja
 // la sesión y cualquier redirección por rol.
 const ResetPassword = () => {
-  const token = new URLSearchParams(window.location.search).get('token')
+  const token = new URLSearchParams(window.location.hash.split('?')[1] || '').get('token')
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')

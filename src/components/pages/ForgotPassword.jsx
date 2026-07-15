@@ -21,7 +21,7 @@ const ForgotPassword = ({ onBack }) => {
       // Solo viene presente cuando el correo sí existe; el mensaje genérico se
       // muestra siempre, exista o no la cuenta, para no filtrar esa información.
       if (data.resetToken) {
-        const resetLink = `${window.location.origin}/recuperar-password?token=${data.resetToken}`
+        const resetLink = `${window.location.origin}/#/recuperar-password?token=${data.resetToken}`
         try {
           await enviarRecuperacion({ correo, nombre: data.nombre, resetLink })
         } catch {

@@ -163,7 +163,7 @@ const Login = ({ onLoginSuccess }) => {
                 <span>Recordarme</span>
               </div>
               <a
-                href="/olvide-password"
+                href="/#/olvide-password"
                 className="text-[#B4533C] font-bold no-underline hover:text-[#a02d0a]"
               >
                 ¿Olvidó su contraseña?
